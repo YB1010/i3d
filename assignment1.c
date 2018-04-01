@@ -27,6 +27,12 @@ typedef struct
 } Globals;
 
 Globals global;
+
+float waterM=0;
+
+
+
+
 void drawAxes(float length)
 {
   glBegin(GL_LINES);
@@ -64,32 +70,37 @@ void displayWater()
 	glBegin(GL_QUAD_STRIP);
 	glColor4f(0.0, 1.0, 1.0,0.6);//light blue color with transparency
 
-    float left=-1.0;
-    float right=1.0;
-    float range=right-left;
+	float left=-1.0;
+	float right=1.0;
+	float range=2;
+
     int seg=1000;
     float stepSize=range/seg;
 
     for (float x = left; x <= right; x+=stepSize) {
       float a,b;
 
-      y=0.25*sin(2*M_PI*x);
+      y=0.25*sin(2*M_PI*x+waterM);
       glVertex3f(x, y, 0);
       glVertex3f(x, -1, 0);
-      
-    
-
     }
 
 
 	glEnd();
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 }
+void updateWater()
+{
+	waterM+=0.05;
+	glutPostRedisplay();
+}
+
 void display()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 	/* Draw something here */
+
 	displayWater();
 	glutSwapBuffers();
 }
@@ -135,6 +146,8 @@ int main(int argc, char** argv)
 	glutReshapeFunc(myReshape);
 	glutDisplayFunc(display);
 	
+
+	glutIdleFunc(updateWater);
 
 	myinit();
 
