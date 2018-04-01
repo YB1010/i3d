@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <stdbool.h>
 
 #if _WIN32
 #   include <Windows.h>
@@ -29,7 +30,7 @@ typedef struct
 Globals global;
 
 float waterM=0;
-
+bool waterM_bool=true;
 
 
 
@@ -91,7 +92,10 @@ void displayWater()
 }
 void updateWater()
 {
-	waterM+=0.05;
+	if (waterM_bool==true)
+	{	
+		waterM+=0.05;
+	}
 	glutPostRedisplay();
 }
 
@@ -111,6 +115,15 @@ void keyboardCB(unsigned char key, int x, int y)
 	case 'q':
 		exit(EXIT_SUCCESS);
 		break;
+	case '`':
+		if (waterM_bool==false)
+		{
+			waterM_bool=true;
+		}
+		else
+		{
+			waterM_bool=false;
+		}
 	/*case 'n':
 		if (global.visualisationMode == tangent)
 			prin
