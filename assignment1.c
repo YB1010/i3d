@@ -22,8 +22,8 @@
 typedef enum { tangent, normal }visualisation;
 
 typedef struct
-{ 
-	float t, lastT, dt; 
+{
+	float t, lastT, dt;
 	visualisation visualisationMode;
 } Globals;
 
@@ -36,7 +36,11 @@ bool waterM_bool=true;
 bool debug_normal=false;
 bool debug_tangent=false;
 bool debug_water=false;
-
+float lmove = 0.0;
+float rmove = 0.0;
+int leftBoat= 0;
+int rightBoat = 0;
+int boatCannon = 0;
 
 void drawVector(float x, float y,float a, float b, float s, bool normalize, float red, float green, float blue)
 {
@@ -77,7 +81,7 @@ void drawTan(float x, float y, float s, float red, float green, float blue)
   	x1+=s;
   	y1=slope*(x1-x)+y;
 
-
+//y1-y=slope*(x1-x)
 
  	drawVector(x,y,x1-x,y1-y,1,false,red,green,blue);
 
@@ -125,23 +129,14 @@ void drawAxes(float length)
   glVertex3f(0, 0, length);
   glEnd();
 }
+
 void displayWater()
 {
+	glClear (GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
 	float y;
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
-	glBegin(GL_LINES);
-	glColor3f(1.0, 0.0, 0.0);//color red
-	glVertex3f(0.0, 0.0, 0.0);
-	glVertex3f(1.0, 0.0, 0.0);//display of x axis
-	glColor3f(0.0, 1.0, 0.0);//color green
-	glVertex3f(0.0, 0.0, 0.0);
-	glVertex3f(0.0, 1.0, 0.0);//display of y axis
-	glColor3f(0.0, 0.0, 1.0);//color blue
-	glVertex3f(0.0, 0.0, 0.0);
-	glVertex3f(0.0, 0.0, 1.0);//display of z axis
-	glEnd();
-
+	drawAxes(10.0);
 	glBegin(GL_LINES);
 /*
 	if (debug_water==false)
@@ -166,8 +161,6 @@ void displayWater()
     int seg=1000;
     float stepSize=range/seg;
 
-    
-
     for (float x = left; x <= right; x+=stepSize) {
 
 	    y=0.25*sin(2*M_PI*x+waterM);
@@ -187,7 +180,7 @@ void displayWater()
 		{
 
 	        y=0.25*sin(2*M_PI*x+waterM);
-			
+
 		    drawTan(x,y,0.05,1,0,0);
 		}
 
@@ -200,36 +193,106 @@ void displayWater()
 			y=0.25*sin(2*M_PI*tx+waterM);
 		    drawNormal(x,y,0.05,0,1,0);
 		}
-	}	
+	}
 
-
-			
-	
-
-	
 }
+
 void updateWater()
 {
 	if (waterM_bool==true)
-	{	
+	{
 		waterM+=0.05;
 	}
 	glutPostRedisplay();
 }
 
+void drawLeftBoat(float l, float h)
+{
+	drawAxes(10.0);
+  /*boatTop*/
+	glPushMatrix();
+	glTranslatef(-0.8,0.5,0.0);
+	glTranslatef(lmove,0.0,0.0);
+	drawAxes(0.5);
+	glRotatef((GLfloat)leftBoat,0.0,0.0,1.0);
+	drawAxes(0.5);
+	glColor3f(1.0, 0.0, 0.0);
+	glBegin(GL_LINE_LOOP);
+	glVertex3f(-0.025, 0.025,0.0);
+	glVertex3f(0.025, 0.025,0.0);
+	glVertex3f(0.025, 0.075,0.0);
+	glVertex3f(-0.025, 0.075,0.0);
+	glEnd();
+	//glutWireCube (1.0);
+
+  /* boat bottom*/
+	glPushMatrix();
+  glColor3f(1.0, 0.0, 0.0);
+  glBegin(GL_LINE_LOOP);
+  glVertex3f(-0.045,-0.055,0.0);
+  glVertex3f(0.045,-0.055,0.0);
+  glVertex3f(0.075,0.025,0.0);
+  glVertex3f(-0.075,0.025,0.0);
+  glEnd();
+  glPopMatrix();
+	glPopMatrix();
+}
+
+void drawRightBoat(float l, float h)
+{
+    drawAxes(10.0);
+		//boat top
+		glPushMatrix();
+		glTranslatef(0.8,0.5,0.0);
+		glTranslatef(rmove,0.0,0.0);
+		glRotatef((GLfloat)rightBoat,0.0,0.0,1.0);
+		drawAxes(0.5);
+		glColor3f(0.0, 0.0, 1.0);
+		glBegin(GL_LINE_LOOP);
+		glVertex3f(-0.025, 0.025,0.0);
+		glVertex3f(0.025, 0.025,0.0);
+		glVertex3f(0.025, 0.075,0.0);
+		glVertex3f(-0.025, 0.075,0.0);
+		glEnd();
+		//boat bottom
+		glPushMatrix();
+	  glColor3f(0.0, 0.0, 1.0);
+	  glBegin(GL_LINE_LOOP);
+	  glVertex3f(-0.045,-0.055,0.0);
+	  glVertex3f(0.045,-0.055,0.0);
+	  glVertex3f(0.075,0.025,0.0);
+	  glVertex3f(-0.075,0.025,0.0);
+	  glEnd();
+    // boat cannon
+
+	  glPopMatrix();
+		glPopMatrix();
+}
 void display()
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	glEnable(GL_DEPTH_TEST);
-	
+
 	/* Draw something here */
 
 	glPolygonMode(GL_BACK, GL_LINES);
 	glPolygonMode(GL_FRONT, GL_LINES);
-	displayWater();
-
-    gluErrorString(glGetError());
+  displayWater();
+	drawLeftBoat(1.0,1.0);
+  drawRightBoat(1.0,1.0);
+  gluErrorString(glGetError());
 	glutSwapBuffers();
+}
+
+void reshape (int w, int h)
+{
+   glViewport (0, 0, (GLsizei) w, (GLsizei) h);
+   glMatrixMode (GL_PROJECTION);
+   glLoadIdentity ();
+   gluPerspective(65.0, (GLfloat) w/(GLfloat) h, 1.0, 20.0);
+   glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity();
+   glTranslatef (0.0, 0.0, -5.0);
 }
 void keyboardCB(unsigned char key, int x, int y)
 {
@@ -247,6 +310,7 @@ void keyboardCB(unsigned char key, int x, int y)
 		{
 			waterM_bool=false;
 		}
+		glutPostRedisplay();
 		break;
 	case 'w':
 		if (debug_water==false)
@@ -257,6 +321,7 @@ void keyboardCB(unsigned char key, int x, int y)
 		{
 			debug_water=false;
 		}
+		glutPostRedisplay();
 		break;
 	case 'n':
 		if (debug_normal==false)
@@ -267,6 +332,7 @@ void keyboardCB(unsigned char key, int x, int y)
 		{
 			debug_normal=false;
 		}
+		glutPostRedisplay();
 		break;
 	case 't':
 		if (debug_tangent==false)
@@ -277,29 +343,29 @@ void keyboardCB(unsigned char key, int x, int y)
 		{
 			debug_tangent=false;
 		}
-		
-
-	/*case 'n':
-		if (global.visualisationMode == tangent)
-			prin
-		else
-			global.visualisationMode == normal;
-	    break;*/
-
+		glutPostRedisplay();
+		break;
+		/*control left boat*/
+   case 'a':
+	   lmove -= 0.2;
+		 glutPostRedisplay();
+		 break;
+	case 'd':
+	   lmove += 0.2;
+		 glutPostRedisplay();
+		 break;
+		 /*control right boat*/
+  case 'j':
+	   rmove -=0.2;
+		 break;
+	case 'l':
+	   rmove += 0.2;
+		 break;
 	default:
 		break;
 	}
 }
-void myReshape(int w, int h)
-{
-	glViewport(0, 0, w, h);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
 
-	glOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-}
 void myinit(void)
 {
 }
@@ -314,10 +380,10 @@ int main(int argc, char** argv)
 
 	glutKeyboardFunc(keyboardCB);
 
-	glutReshapeFunc(myReshape);
+	//glutReshapeFunc(reshape);
 
 	glutDisplayFunc(display);
-	
+
 
 	glutIdleFunc(updateWater);
 
@@ -325,5 +391,3 @@ int main(int argc, char** argv)
 
 	glutMainLoop();
 }
-
-
