@@ -36,11 +36,58 @@ bool waterM_bool=true;
 bool debug_normal=false;
 bool debug_tangent=false;
 bool debug_water=false;
-float lmove = 0.0;
-float rmove = 0.0;
+float lmove = -0.5;
+float rmove = 0.5;
 int leftBoat= 0;
 int rightBoat = 0;
 int boatCannon = 0;
+
+void updateWater()
+{
+	if (waterM_bool==true)
+	{
+		waterM+=0.05;
+	}
+	glutPostRedisplay();
+}
+
+float getSineY(float x)
+{
+	float y;
+	y=0.25*sin(2*M_PI*x+waterM);
+	return y;
+}
+
+float getSineSlope(float x)
+{
+	float slope;
+	slope=0.25*2*M_PI*cos(2*M_PI*x+waterM);
+	return slope;
+}
+
+float getRotateDegree(float x)
+{
+	float slope;
+	float degree;
+	float x1,y1;
+	float y;
+
+	y=getSineY(x);
+	slope=getSineSlope(x);
+
+	x1=x;
+
+
+  	x1+=0.01;
+  	y1=slope*(x1-x)+y;
+
+  	y1-=y;
+  	x1-=x;
+
+  	degree=atan2(y1,x1);
+
+  	return degree;
+}
 
 void drawVector(float x, float y,float a, float b, float s, bool normalize, float red, float green, float blue)
 {
@@ -74,7 +121,13 @@ void drawTan(float x, float y, float s, float red, float green, float blue)
 
     y=0.25*sin(2*M_PI*x+waterM);
 
-    slope=0.25*2*M_PI*cos(2*M_PI*x+waterM);
+
+    slope=getSineSlope(x);
+    if (x < 0.00)
+    {
+    	
+    printf("tan slope:%f\n tan x :%f",slope,x );
+    }
     x1=x;
 
 
@@ -163,7 +216,7 @@ void displayWater()
 
     for (float x = left; x <= right; x+=stepSize) {
 
-	    y=0.25*sin(2*M_PI*x+waterM);
+	    y=getSineY(x);
 	    glVertex3f(x, y, 0);
 
     	glVertex3f(x,-1,0);
@@ -181,7 +234,7 @@ void displayWater()
 
 	        y=0.25*sin(2*M_PI*x+waterM);
 
-		    drawTan(x,y,0.05,1,0,0);
+		    drawTan(x,y,0.1,1,0,0);
 		}
 
 	}
@@ -197,24 +250,19 @@ void displayWater()
 
 }
 
-void updateWater()
-{
-	if (waterM_bool==true)
-	{
-		waterM+=0.05;
-	}
-	glutPostRedisplay();
-}
+
+
+
 
 void drawLeftBoat(float l, float h)
 {
+
+	float rotateDegree=getRotateDegree(lmove);
 	drawAxes(10.0);
   /*boatTop*/
 	glPushMatrix();
-	glTranslatef(-0.8,0.5,0.0);
-	glTranslatef(lmove,0.0,0.0);
-	drawAxes(0.5);
-	glRotatef((GLfloat)leftBoat,0.0,0.0,1.0);
+	glTranslatef(lmove,getSineY(lmove),0.0);
+	glRotatef((180/M_PI)*rotateDegree,0.0,0.0,1.0);
 	drawAxes(0.5);
 	glColor3f(1.0, 0.0, 0.0);
 	glBegin(GL_LINE_LOOP);
@@ -227,25 +275,28 @@ void drawLeftBoat(float l, float h)
 
   /* boat bottom*/
 	glPushMatrix();
-  glColor3f(1.0, 0.0, 0.0);
-  glBegin(GL_LINE_LOOP);
-  glVertex3f(-0.045,-0.055,0.0);
-  glVertex3f(0.045,-0.055,0.0);
-  glVertex3f(0.075,0.025,0.0);
-  glVertex3f(-0.075,0.025,0.0);
-  glEnd();
-  glPopMatrix();
+	glColor3f(1.0, 0.0, 0.0);
+	glBegin(GL_LINE_LOOP);
+	glVertex3f(-0.045,-0.055,0.0);
+	glVertex3f(0.045,-0.055,0.0);
+	glVertex3f(0.075,0.025,0.0);
+	glVertex3f(-0.075,0.025,0.0);
+	glEnd();
+	glPopMatrix();
 	glPopMatrix();
 }
 
 void drawRightBoat(float l, float h)
 {
-    drawAxes(10.0);
+	float RBoatUpdate;
+
+	float rotateDegree=getRotateDegree(rmove);
+	///
+	drawAxes(10.0);
 		//boat top
 		glPushMatrix();
-		glTranslatef(0.8,0.5,0.0);
-		glTranslatef(rmove,0.0,0.0);
-		glRotatef((GLfloat)rightBoat,0.0,0.0,1.0);
+		glTranslatef(rmove,getSineY(rmove),0.0);
+		glRotatef((180/M_PI)*rotateDegree,0.0,0.0,1.0);
 		drawAxes(0.5);
 		glColor3f(0.0, 0.0, 1.0);
 		glBegin(GL_LINE_LOOP);
@@ -278,7 +329,7 @@ void display()
 	glPolygonMode(GL_BACK, GL_LINES);
 	glPolygonMode(GL_FRONT, GL_LINES);
   displayWater();
-	drawLeftBoat(1.0,1.0);
+  drawLeftBoat(1.0,1.0);
   drawRightBoat(1.0,1.0);
   gluErrorString(glGetError());
 	glutSwapBuffers();
@@ -347,19 +398,19 @@ void keyboardCB(unsigned char key, int x, int y)
 		break;
 		/*control left boat*/
    case 'a':
-	   lmove -= 0.2;
+	   lmove -= 0.1;
 		 glutPostRedisplay();
 		 break;
 	case 'd':
-	   lmove += 0.2;
+	   lmove += 0.1;
 		 glutPostRedisplay();
 		 break;
 		 /*control right boat*/
   case 'j':
-	   rmove -=0.2;
+	   rmove -=0.1;
 		 break;
 	case 'l':
-	   rmove += 0.2;
+	   rmove += 0.1;
 		 break;
 	default:
 		break;
