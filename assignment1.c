@@ -123,11 +123,6 @@ void drawTan(float x, float y, float s, float red, float green, float blue)
 
 
     slope=getSineSlope(x);
-    if (x < 0.00)
-    {
-    	
-    printf("tan slope:%f\n tan x :%f",slope,x );
-    }
     x1=x;
 
 
