@@ -20,6 +20,7 @@
 float lmove = 0.0;
 float rmove = 0.0;
 int rotate = 0;
+int a = 0.0;
 void drawAxes(float length)
 {
 	glBegin(GL_LINES);
@@ -68,37 +69,51 @@ void myWireRhombus(float l, float h)
 void drawLeftBoat(float l, float h)
 {
 
-  glClear (GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	drawAxes(10.0);
-  /*boatTop*/
+	/*boatTop*/
 	glPushMatrix();
-	glTranslatef(-0.8,0.0,0.0);
-	glTranslatef(lmove,0.0,0.0);
+	glTranslatef(-0.8, 0.0, 0.0);
+	glTranslatef(lmove, 0.0, 0.0);
 	drawAxes(0.5);
-	glRotatef((GLfloat)rotate,0.0,0.0,1.0);
+	glRotatef((GLfloat)rotate, 0.0, 0.0, 1.0);
 	drawAxes(0.5);
 	glColor3f(1.0, 0.0, 0.0);
 	glBegin(GL_LINE_LOOP);
 	//glScalef(0.8f,0.8f,0.8f);
-	glVertex3f(-0.25, 0.25,0.0);
-	glVertex3f(0.25, 0.25,0.0);
-	glVertex3f(0.25, 0.5,0.0);
-	glVertex3f(-0.25, 0.5,0.0);
+	glVertex3f(-0.25, 0.25, 0.0);
+	glVertex3f(0.25, 0.25, 0.0);
+	glVertex3f(0.25, 0.5, 0.0);
+	glVertex3f(-0.25, 0.5, 0.0);
 	glEnd();
-	//glutWireCube (1.0);
 
-  /* boat bottom*/
+	/* boat bottom*/
 	glPushMatrix();
-  glColor3f(1.0, 0.0, 0.0);
-  glBegin(GL_LINE_LOOP);
-  glVertex2f(-0.35,-0.15);
-  glVertex2f(0.35,-0.15);
-  glVertex2f(0.5,0.25);
-  glVertex2f(-0.5,0.25);
-  glEnd();
+	glColor3f(1.0, 0.0, 0.0);
+	glBegin(GL_LINE_LOOP);
+	glVertex2f(-0.35, -0.15);
+	glVertex2f(0.35, -0.15);
+	glVertex2f(0.5, 0.25);
+	glVertex2f(-0.5, 0.25);
+	glEnd();
 	/*boat cannon*/
-
-  glPopMatrix();
+	glPushMatrix();
+	glColor3f(1.0, 0.0, 0.0);
+	glTranslatef(0.25, 0.25, 0);
+	glRotatef(30.0, 0.0, 0.0, 1.0);
+	glBegin(GL_LINE_LOOP);
+	glVertex2f(0, 0);
+	glVertex2f(0.45, 0);
+	glVertex2f(0.45, 0.15);
+	glVertex2f(0, 0.15);
+	glEnd();
+	/*boat missile*/
+	glPushMatrix();
+	glTranslatef(0, 0.08, 0);
+	glutWireSphere(0.05, 16, 10);
+	glPopMatrix();
+	glPopMatrix();
+	glPopMatrix();
 	glPopMatrix();
 }
 
@@ -106,43 +121,75 @@ void drawRightBoat(float l, float h)
 {
 	drawAxes(10.0);
 	glPushMatrix();
-	glTranslatef(0.8,0.0,0.0);
-	glTranslatef(rmove,0.0,0.0);
-	glRotatef(0.0,0.0,0.0,1.0);
+	glTranslatef(0.8, 0.0, 0.0);
+	glTranslatef(rmove, 0.0, 0.0);
+	glRotatef(0.0, 0.0, 0.0, 1.0);
 
 	drawAxes(0.5);
 	glColor3f(0.0, 0.0, 1.0);
 	glBegin(GL_LINE_LOOP);
 	glScalef(l, h, 1.0);
-	glScalef (0.2,0.2,0.2);
+	glScalef(0.2, 0.2, 0.2);
 	glVertex2f(-0.25, 0.25);
 	glVertex2f(0.25, 0.25);
 	glVertex2f(0.25, 0.5);
 	glVertex2f(-0.25, 0.5);
 	glEnd();
-  glPopMatrix();
+	glPopMatrix();
 }
-
+void drawIsland()
+{
+	drawAxes(10.0);
+	   glPushMatrix();
+	   /*island body*/
+	   glColor3f(1.0,1.0,0.0);
+	   glBegin(GL_LINE_LOOP);
+	   glVertex2f(-0.2,-2);
+	   glVertex2f(0.2, -2);
+	   glVertex2f(0.2, 0.2);
+	   glVertex2f(-0.2, 0.2);
+	   glEnd();
+	   /*island cannon*/
+	   glTranslatef(0.0, 0.2, 0.0);
+	   glRotatef(a, 0.0, 0.0, 1.0);
+	   glPushMatrix();
+	   drawAxes(0.4);
+	   glColor3f(1.0, 1.0, 0.0);
+	   glBegin(GL_LINE_LOOP);
+	   glVertex2f(0, 0);
+	   glVertex2f(0.2, 0);
+	   glVertex2f(0.2, 0.1);
+	   glVertex2f(0, 0.1);
+	   glEnd();
+	   /*misslie*/
+	   glPushMatrix();
+	   glTranslatef(0.0, 0.05, 0.0);//missile position
+	   glutWireSphere(0.05, 16, 10);//missile
+	   glPopMatrix();
+	   glPopMatrix();
+	   glPopMatrix();
+}
 void display()
 {
 	/* Put drawing code here*/
 	//myWireRect(0.05,0.125);
 	//myWireRhombus(0.5, 0.6);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	drawLeftBoat(1.0,1.0);
-	drawRightBoat(1.0,1.0);
+	drawLeftBoat(1.0, 1.0);
+	drawRightBoat(1.0, 1.0);
+	drawIsland();
 	glutSwapBuffers();
 }
 
-void reshape (int w, int h)
+void reshape(int w, int h)
 {
-   glViewport (0, 0, (GLsizei) w, (GLsizei) h);
-   glMatrixMode (GL_PROJECTION);
-   glLoadIdentity ();
-   gluPerspective(65.0, (GLfloat) w/(GLfloat) h, 1.0, 20.0);
-   glMatrixMode(GL_MODELVIEW);
-   glLoadIdentity();
-   glTranslatef (0.0, 0.0, -6.0);
+	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(65.0, (GLfloat)w / (GLfloat)h, 1.0, 20.0);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glTranslatef(0.0, 0.0, -5.0);
 }
 
 /* You can ignore this for now, it just lets you exit when you press 'q' or ESC */
@@ -151,34 +198,50 @@ void keyboard(unsigned char key, int x, int y)
 	switch (key)
 	{
 
-  case 'd':
-	   glutPostRedisplay();
-	   lmove += 0.2;
-		 glutPostRedisplay();
-     break;
+	case 'd':
+		glutPostRedisplay();
+		lmove += 0.2;
+		glutPostRedisplay();
+		break;
 	case 'a':
-	    glutPostRedisplay();
-			lmove-=0.2;
-			glutPostRedisplay();
-			break;
+		glutPostRedisplay();
+		lmove -= 0.2;
+		glutPostRedisplay();
+		break;
 	case 'j':
-	    glutPostRedisplay();
-	    rmove -= 0.2;
-			break;
+		glutPostRedisplay();
+		rmove -= 0.2;
+		break;
 	case 'l':
-	    glutPostRedisplay();
-			rmove +=0.2;
-			break;
+		glutPostRedisplay();
+		rmove += 0.2;
+		break;
 	case 'r':
-   	 glutPostRedisplay();
-	   rotate = (rotate + 5)%360;
-		 glutPostRedisplay();
-	   break;
+		glutPostRedisplay();
+		rotate = (rotate + 5) % 360;
+		glutPostRedisplay();
+		break;
 	case 'R':
-	    glutPostRedisplay();
-	    rotate = (rotate -5)%360;
-			glutPostRedisplay();
-	    break;
+		glutPostRedisplay();
+		rotate = (rotate - 5) % 360;
+		glutPostRedisplay();
+		break;
+	case 't'://turn left
+		glutPostRedisplay();
+		if (a < 147)
+		{
+			a += 1;
+		}
+		break;
+		glutPostRedisplay();
+	case 'T'://turn right
+		glutPostRedisplay();
+		if (a > 0)
+		{
+			a -= 1;
+		}	
+		break;
+		glutPostRedisplay();
 	case 'q':
 		exit(EXIT_SUCCESS);
 		break;
@@ -203,7 +266,7 @@ int main(int argc, char **argv)
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	glutCreateWindow("exercise");
 	init();
-  //glutReshapeFunc(reshape);
+	//glutReshapeFunc(reshape);
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keyboard);
 	glutMainLoop();
