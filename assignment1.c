@@ -18,6 +18,9 @@
 #   include <GL/glut.h>
 #endif
 
+#ifndef WATER_SPEED
+#define WATER_SPEED 0.02;
+#endif
 
 typedef enum { tangent, normal }visualisation;
 
@@ -29,39 +32,75 @@ typedef struct
 
 typedef struct { float x, y; } vec2f;
 
-Globals global;
 
-float waterM=0;
-bool waterM_bool=true;
-bool debug_normal=false;
-bool debug_tangent=false;
-bool debug_water=false;
-float lmove = -0.5;
-float rmove = 0.5;
-int leftBoat= 0;
-int rightBoat = 0;
-int boatCannon = 0;
+typedef struct {
+
+  float waterM;
+  bool waterM_bool;
+  bool debug_normal;
+  bool debug_tangent;
+  bool debug_water;
+  float lmove;
+  float rmove;
+  float lrotate;
+  float rrotate;
+  int leftBoat;
+  int rightBoat;
+  int boatCannon;
+  float startTime;
+  int frames;
+  float frameRate;
+  float frameRateInterval;
+  float lastFrameRateT;
+
+} global_t;
+
+typedef struct 
+{
+	int life;
+	bool alive;
+	//to be fill
+}boat;
+
+
+typedef struct 
+{
+	bool alive;
+
+}cannon;
+
+typedef struct 
+{
+	int life;
+	bool alive;
+	//to be fill
+}island;
+
+const int milli = 1000;
+global_t global={0,true,false,false,false,-0.5,0.5,30.0,150.0,0,0,0,0,0,0.2,0};
 
 void updateWater()
 {
-	if (waterM_bool==true)
+	
+	if (global.waterM_bool==true)
 	{
-		waterM+=0.05;
+		global.waterM+=WATER_SPEED;
 	}
+	
 	glutPostRedisplay();
 }
 
 float getSineY(float x)
 {
 	float y;
-	y=0.25*sin(2*M_PI*x+waterM);
+	y=0.25*sin(2*M_PI*x+global.waterM);
 	return y;
 }
 
 float getSineSlope(float x)
 {
 	float slope;
-	slope=0.25*2*M_PI*cos(2*M_PI*x+waterM);
+	slope=0.25*2*M_PI*cos(2*M_PI*x+global.waterM);
 	return slope;
 }
 
@@ -119,7 +158,7 @@ void drawTan(float x, float y, float s, float red, float green, float blue)
 	float slope;
     float y1,x1;
 
-    y=0.25*sin(2*M_PI*x+waterM);
+    y=0.25*sin(2*M_PI*x+global.waterM);
 
 
     slope=getSineSlope(x);
@@ -143,9 +182,9 @@ void drawNormal(float x, float y, float s, float red, float green, float blue)
 	float slope;
     float y1,x1;
 
-    y=0.25*sin(2*M_PI*x+waterM);
+    y=getSineY(x);
 
-    slope=0.25*2*M_PI*cos(2*M_PI*x+waterM);
+    slope=getSineSlope(x);
     x1=x;
 
 
@@ -178,14 +217,68 @@ void drawAxes(float length)
   glEnd();
 }
 
+void displayOSD()
+{
+  char buffer[30];
+  char *bufp;
+  int w, h;
+    
+  glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_LIGHTING);
+
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  glLoadIdentity();
+
+  /* Set up orthographic coordinate system to match the 
+     window, i.e. (0,0)-(w,h) */
+  w = glutGet(GLUT_WINDOW_WIDTH);
+  h = glutGet(GLUT_WINDOW_HEIGHT);
+  glOrtho(0.0, w, 0.0, h, -1.0, 1.0);
+
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glLoadIdentity();
+
+  /* Frame rate */
+  glColor3f(1.0, 1.0, 0.0);
+  glRasterPos2i(250, 380);
+  snprintf(buffer, sizeof buffer, "fr (f/s): %6.0f", global.frameRate);
+  for (bufp = buffer; *bufp; bufp++)
+    glutBitmapCharacter(GLUT_BITMAP_9_BY_15, *bufp);
+
+  /* Time per frame */
+  glColor3f(1.0, 1.0, 0.0);
+  glRasterPos2i(250, 360);
+  snprintf(buffer, sizeof buffer, "ft (ms/f): %5.0f", 1.0 / global.frameRate * 1000.0);
+  for (bufp = buffer; *bufp; bufp++)
+    glutBitmapCharacter(GLUT_BITMAP_9_BY_15, *bufp);
+
+  /* tess */
+  glColor3f(1.0, 1.0, 0.0);
+  glRasterPos2i(250, 340);
+  snprintf(buffer, sizeof buffer, "tess: %10.0f", 1.0 / global.frameRate * 1000.0);
+  for (bufp = buffer; *bufp; bufp++)
+    glutBitmapCharacter(GLUT_BITMAP_9_BY_15, *bufp);
+
+  /* Pop modelview */
+  glPopMatrix();  
+  glMatrixMode(GL_PROJECTION);
+
+  /* Pop projection */
+  glPopMatrix();  
+  glMatrixMode(GL_MODELVIEW);
+
+  /* Pop attributes */
+  glPopAttrib();
+}
+
 void displayWater()
 {
-	glClear (GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
 	float y;
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_BLEND);
 	drawAxes(10.0);
-	glBegin(GL_LINES);
+	glBegin(GL_QUAD_STRIP);
 /*
 	if (debug_water==false)
 		{
@@ -200,7 +293,7 @@ void displayWater()
 */
 
 
-	glColor4f(0.0, 1.0, 1.0,0.6);//light blue color with transparency
+	glColor4f(0.0, 1.0, 1.0,0.5);//light blue color with transparency
 
 	float left=-1.0;
 	float right=1.0;
@@ -214,7 +307,11 @@ void displayWater()
 	    y=getSineY(x);
 	    glVertex3f(x, y, 0);
 
-    	glVertex3f(x,-1,0);
+	    if (!global.debug_water)
+	    {
+	    	
+    		glVertex3f(x,-1,0);
+	    }
 
     }
 
@@ -222,23 +319,23 @@ void displayWater()
 
 	float tx,ty;
 
-	if (debug_tangent==true)
+	if (global.debug_tangent==true)
 	{
 		for (float x = left; x <= right; x+=0.05)
 		{
 
-	        y=0.25*sin(2*M_PI*x+waterM);
+	        y=getSineY(x);
 
 		    drawTan(x,y,0.1,1,0,0);
 		}
 
 	}
 
-	if (debug_normal==true)
+	if (global.debug_normal==true)
 	{
 		for (float x = left; x <= right; x+=0.05)
 		{
-			y=0.25*sin(2*M_PI*tx+waterM);
+			y=getSineY(x);
 		    drawNormal(x,y,0.05,0,1,0);
 		}
 	}
@@ -252,15 +349,15 @@ void displayWater()
 void drawLeftBoat(float l, float h)
 {
 
-	float rotateDegree=getRotateDegree(lmove);
+	float rotateDegree=getRotateDegree(global.lmove);
 	drawAxes(10.0);
   /*boatTop*/
 	glPushMatrix();
-	glTranslatef(lmove,getSineY(lmove),0.0);
+	glTranslatef(global.lmove,getSineY(global.lmove),0.0);
 	glRotatef((180/M_PI)*rotateDegree,0.0,0.0,1.0);
 	drawAxes(0.5);
 	glColor3f(1.0, 0.0, 0.0);
-	glBegin(GL_LINE_LOOP);
+	glBegin(GL_POLYGON);
 	glVertex3f(-0.025, 0.025,0.0);
 	glVertex3f(0.025, 0.025,0.0);
 	glVertex3f(0.025, 0.075,0.0);
@@ -269,15 +366,36 @@ void drawLeftBoat(float l, float h)
 	//glutWireCube (1.0);
 
   /* boat bottom*/
-	glPushMatrix();
 	glColor3f(1.0, 0.0, 0.0);
-	glBegin(GL_LINE_LOOP);
-	glVertex3f(-0.045,-0.055,0.0);
-	glVertex3f(0.045,-0.055,0.0);
-	glVertex3f(0.075,0.025,0.0);
-	glVertex3f(-0.075,0.025,0.0);
+	glBegin(GL_POLYGON);
+
+	glVertex3f(0.1,0.025,0.0);
+
+	glVertex3f(0.05,-0.025,0.0);
+	glVertex3f(-0.05,-0.025,0.0);
+
+	glVertex3f(-0.1,0.025,0.0);
 	glEnd();
+
+  //boat cannon
+
+	glPushMatrix();
+
+	glRotatef(global.lrotate,0,0,1.0);
+	glBegin(GL_POLYGON);
+
+
+	glVertex3f(0.1,0.005,0.0);
+
+	glVertex3f(0.1,-0.005,0.0);
+	glVertex3f(0,-0.005,0.0);
+
+	glVertex3f(0,0.005,0.0);
+	glEnd();
+
+
 	glPopMatrix();
+
 	glPopMatrix();
 }
 
@@ -285,49 +403,71 @@ void drawRightBoat(float l, float h)
 {
 	float RBoatUpdate;
 
-	float rotateDegree=getRotateDegree(rmove);
+	float rotateDegree=getRotateDegree(global.rmove);
 	///
 	drawAxes(10.0);
 		//boat top
 		glPushMatrix();
-		glTranslatef(rmove,getSineY(rmove),0.0);
+		glTranslatef(global.rmove,getSineY(global.rmove),0.0);
 		glRotatef((180/M_PI)*rotateDegree,0.0,0.0,1.0);
 		drawAxes(0.5);
 		glColor3f(0.0, 0.0, 1.0);
-		glBegin(GL_LINE_LOOP);
+		glBegin(GL_POLYGON);
 		glVertex3f(-0.025, 0.025,0.0);
 		glVertex3f(0.025, 0.025,0.0);
 		glVertex3f(0.025, 0.075,0.0);
 		glVertex3f(-0.025, 0.075,0.0);
 		glEnd();
 		//boat bottom
-		glPushMatrix();
 	  glColor3f(0.0, 0.0, 1.0);
-	  glBegin(GL_LINE_LOOP);
-	  glVertex3f(-0.045,-0.055,0.0);
-	  glVertex3f(0.045,-0.055,0.0);
-	  glVertex3f(0.075,0.025,0.0);
-	  glVertex3f(-0.075,0.025,0.0);
+	  glBegin(GL_POLYGON);
+
+	  glVertex3f(0.1,0.025,0.0);
+
+	  glVertex3f(0.05,-0.025,0.0);
+	  glVertex3f(-0.05,-0.025,0.0);
+
+	  glVertex3f(-0.1,0.025,0.0);
 	  glEnd();
     // boat cannon
 
-	  glPopMatrix();
+	  glPushMatrix();
+
+	glRotatef(global.rrotate,0,0,1.0);
+	glBegin(GL_POLYGON);
+
+
+	glVertex3f(0.1,0.005,0.0);
+
+	glVertex3f(0.1,-0.005,0.0);
+	glVertex3f(0,-0.005,0.0);
+
+	glVertex3f(0,0.005,0.0);
+	glEnd();
+
+
+	glPopMatrix();
 		glPopMatrix();
 }
 void display()
 {
 
-	glEnable(GL_DEPTH_TEST);
-
+  glEnable(GL_BLEND);	
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glClear (GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
 	/* Draw something here */
 
-	glPolygonMode(GL_BACK, GL_LINES);
-	glPolygonMode(GL_FRONT, GL_LINES);
-  displayWater();
   drawLeftBoat(1.0,1.0);
   drawRightBoat(1.0,1.0);
+  displayWater();
+
+  displayOSD();
+
   gluErrorString(glGetError());
+
 	glutSwapBuffers();
+
+  global.frameRate++;
 }
 
 void reshape (int w, int h)
@@ -344,69 +484,89 @@ void keyboardCB(unsigned char key, int x, int y)
 {
 	switch (key)
 	{
-	case 'q':
+	case 27:
 		exit(EXIT_SUCCESS);
 		break;
 	case '`':
-		if (waterM_bool==false)
+		if (global.waterM_bool==false)
 		{
-			waterM_bool=true;
+			global.waterM_bool=true;
 		}
 		else
 		{
-			waterM_bool=false;
+			global.waterM_bool=false;
 		}
-		glutPostRedisplay();
 		break;
 	case 'w':
-		if (debug_water==false)
+		if (global.debug_water==false)
 		{
-			debug_water=true;
+			global.debug_water=true;
 		}
 		else
 		{
-			debug_water=false;
+			global.debug_water=false;
 		}
-		glutPostRedisplay();
 		break;
 	case 'n':
-		if (debug_normal==false)
+		if (global.debug_normal==false)
 		{
-			debug_normal=true;
+			global.debug_normal=true;
 		}
 		else
 		{
-			debug_normal=false;
+			global.debug_normal=false;
 		}
-		glutPostRedisplay();
 		break;
 	case 't':
-		if (debug_tangent==false)
+		if (global.debug_tangent==false)
 		{
-			debug_tangent=true;
+			global.debug_tangent=true;
 		}
 		else
 		{
-			debug_tangent=false;
+			global.debug_tangent=false;
 		}
-		glutPostRedisplay();
 		break;
 		/*control left boat*/
    case 'a':
-	   lmove -= 0.1;
-		 glutPostRedisplay();
+	   global.lmove -= 0.1;
 		 break;
 	case 'd':
-	   lmove += 0.1;
-		 glutPostRedisplay();
+	   global.lmove += 0.1;
 		 break;
 		 /*control right boat*/
-  case 'j':
-	   rmove -=0.1;
+	case 'j':
+	   global.rmove -=0.1;
 		 break;
 	case 'l':
-	   rmove += 0.1;
+	   global.rmove += 0.1;
 		 break;
+	case 'q':
+		if (global.lrotate<180)
+		{
+			global.lrotate+=5;
+		}
+		break;
+	case 'Q':
+		if (global.lrotate>0)
+		{
+			global.lrotate-=5;
+		}
+		break;
+	case 'o':
+		if (global.rrotate>0)
+		{
+			global.rrotate-=5;
+		}
+		
+		break;
+	case 'O':
+		if (global.rrotate<180)
+		{
+			global.rrotate+=5;
+		}
+		break;
+
 	default:
 		break;
 	}
