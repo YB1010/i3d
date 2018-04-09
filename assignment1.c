@@ -30,22 +30,27 @@ typedef struct
 	float x,y;
 }vec2f;
 
-typedef struct{vec2f r,v;} islandMissile;
-islandMissile projectile = {
+typedef struct{vec2f r,v;} Missile;
+Missile projectile = {
 	{0.0, 0.0},
 	{1.0, 1.0}
 };
 
-typedef struct{vec2f r1,v1;}lBoatMissile;
-lBoatMissile lboat = {
+Missile lboat = {
 	{-0.45,0.25},//position of left boat missile, need to fix y axis
+	{1.0,1.0}
+};
+Missile rboat = {
+	{0.45,0.25},//position of left boat missile, need to fix y axis
 	{1.0,1.0}
 };
 
 typedef struct
  {
     float waterM;
-		bool iCannonMove;
+	bool iCannonMove;
+    bool lCannonMove;
+    bool rCannonMove;
     bool waterM_bool;
     bool debug_normal;
     bool debug_tangent;
@@ -63,6 +68,9 @@ typedef struct
     float frameRate;
     float frameRateInterval;
     float lastFrameRateT;
+    float dt;
+    float t;
+    float lastT;
 
 } global_t;
 
@@ -89,7 +97,7 @@ typedef struct
 
 const int milli = 1000;
 const float g = -9.8;
-global_t global={0,false,true,false,false,false,30.0,-0.5,0.5,30.0,150.0,0,0,0,0,0,0.2,0};
+global_t global={0,false,false,false,true,false,false,false,30.0,-0.5,0.5,30.0,150.0,0,0,0,0,0,0.2,0,0,0,-1};
 
 
 
@@ -366,13 +374,33 @@ void drawLeftBoat(float l, float h)
 
 	glPopMatrix();
 	glPopMatrix();
+
+	if (!global.lCannonMove)
+	{
+
+	lboat.r.y=getSineY(global.lmove)+sin(getRotateDegree(global.lmove)+((M_PI/180)*global.lrotate))*0.1;
+		//reverse the previsou translatef and rotates.
+	lboat.r.x=global.lmove+cos(getRotateDegree(global.lmove)+((M_PI/180)*global.lrotate))*0.1;
+		
+	lboat.v.y=5*(-getSineY(global.lmove)+lboat.r.y);//get the distance between the cannon end and the center of boat.
+	lboat.v.x=5*(-global.lmove+lboat.r.x);
+
+
+	}
+
+
+	   if (lboat.r.y>1||lboat.r.y<-1||lboat.r.x<-1||lboat.r.x>1)
+	{
+	   	global.lCannonMove=false;
+	}
+
 }
 
 void drawRightBoat(float l, float h)
 {
-	  float RBoatUpdate;
-	  float rotateDegree=getRotateDegree(global.rmove);
-	  drawAxes(10.0);
+		float RBoatUpdate;
+		float rotateDegree=getRotateDegree(global.rmove);
+		drawAxes(10.0);
 		/*boat top*/
 		glPushMatrix();
 		glTranslatef(global.rmove,getSineY(global.rmove),0.0);
@@ -387,8 +415,8 @@ void drawRightBoat(float l, float h)
 		glEnd();
 
 		/*boat bottom*/
-	  glColor3f(0.0, 0.0, 1.0);
-	  glBegin(GL_POLYGON);
+		glColor3f(0.0, 0.0, 1.0);
+		glBegin(GL_POLYGON);
 	  glVertex3f(0.1,0.025,0.0);
 	  glVertex3f(0.05,-0.025,0.0);
 	  glVertex3f(-0.05,-0.025,0.0);
@@ -405,8 +433,27 @@ void drawRightBoat(float l, float h)
 	  glVertex3f(0,0.005,0.0);
 	  glEnd();
 
-	  glPopMatrix();
-		glPopMatrix();
+	glPopMatrix();
+	glPopMatrix();
+
+	if (!global.rCannonMove)
+	{
+
+	rboat.r.y=getSineY(global.rmove)+sin(getRotateDegree(global.rmove)+((M_PI/180)*global.rrotate))*0.1;
+		//reverse the previsou translatef and rotates.
+	rboat.r.x=global.rmove+cos(getRotateDegree(global.rmove)+((M_PI/180)*global.rrotate))*0.1;
+		
+	rboat.v.y=5*(-getSineY(global.rmove)+rboat.r.y);//get the distance between the cannon end and the center of boat.
+	rboat.v.x=5*(-global.rmove+rboat.r.x);
+
+
+	}
+
+
+	if (rboat.r.y>1||rboat.r.y<-1||rboat.r.x<-1||rboat.r.x>1)
+	{
+	   	global.rCannonMove=false;
+	}
 }
 
 void drawIsand()
@@ -462,39 +509,60 @@ void drawIsand()
 
 void missleProjectileMotion(float dt)
 {
-
-
-	 //position
-	 projectile.r.x += projectile.v.x * dt;
-	 projectile.r.y += projectile.v.y * dt;
+	if (global.iCannonMove)
+	{
+		projectile.r.x += projectile.v.x * dt;
+		projectile.r.y += projectile.v.y * dt;
    /*	 projectile.r.x += 0.25 * cos(global.islandCannon);
 	 	 projectile.r.y += 0.25 * sin(global.islandCannon);*/
 
 	//Velocity
 
 
-	projectile.v.y += g * dt;
+		projectile.v.y += g * dt;
+	}
+	if (global.lCannonMove)
+	{
+		lboat.r.x += lboat.v.x * dt;
+		lboat.r.y += lboat.v.y * dt;
+  
+
+
+		lboat.v.y += g * dt;
+	}
+	if (global.rCannonMove)
+	{
+		rboat.r.x += rboat.v.x * dt;
+		rboat.r.y += rboat.v.y * dt;
+  
+
+
+		rboat.v.y += g * dt;
+	}
+
+	 //position
+
 }
 
-
-
-void lboatMissle(float dt)
-{
-	//position
-	lboat.r1.x += lboat.v1.x * dt;
-	lboat.r1.y += lboat.v1.y * dt;
- //Velocity
- lboat.v1.y += g * dt;
-}
 void displayLboatMissile(void)
 {
 	 glPushMatrix();
-	 glTranslatef(lboat.r1.x, lboat.r1.y, 0.0);
+	 glTranslatef(lboat.r.x, lboat.r.y, 0.0);
 	 //glRotatef(global.islandCannon, 0.0, 0.0, 1.0);
 	 glColor3f(1.0,1.0,1.0);
    glutWireSphere(0.005, 16, 10);
    glPopMatrix();
 }
+void displayRboatMissile(void)
+{
+	 glPushMatrix();
+	 glTranslatef(rboat.r.x, rboat.r.y, 0.0);
+	 //glRotatef(global.islandCannon, 0.0, 0.0, 1.0);
+	 glColor3f(1.0,1.0,1.0);
+   glutWireSphere(0.005, 16, 10);
+   glPopMatrix();
+}
+
 void update()
 {
     /*update water*/
@@ -504,31 +572,33 @@ void update()
 	}
     glutPostRedisplay();
   /*update island missle*/
-    static float lastT = -1.0;
-     float t, dt;
-    if (!global.iCannonMove)
-	   return;
-    t = (glutGet(GLUT_ELAPSED_TIME) / (float)milli) - global.startTime;
-    printf("%f\n",t );
 
-    if (lastT < 0.0)
+
+    global.t = (glutGet(GLUT_ELAPSED_TIME) / (float)milli) - global.startTime;
+    printf("%f\n",global.t );
+
+    if (global.lastT < 0.0)
     {
-	   lastT = t;
+	   global.lastT = global.t;
 	   return;
     }
-    dt = t - lastT;
-    if (dt<0)
+    global.dt = global.t - global.lastT;
+    if (global.dt < 0)
     {
-    	lastT = t;
+    	global.lastT = global.t;
     	return;
     }
 
-	printf("rx:%f,ry:%f,,vx:%f,:vy:%f,,dt:%f  \n",projectile.r.x,projectile.r.y,projectile.v.x,projectile.v.y,dt );
+	printf("rx:%f,ry:%f,,vx:%f,:vy:%f,,dt:%f  \n",projectile.r.x,projectile.r.y,projectile.v.x,projectile.v.y,global.dt );
 
  /*if (global.debug)
 	 printf("%f %f\n", t, dt);*/
-	missleProjectileMotion(dt);
-    lastT = t;
+	
+	missleProjectileMotion(global.dt);
+	
+
+
+    global.lastT = global.t;
 /*problem here is the continuous firing and missile direction cannot follow the cannon direction*/
 	glutPostRedisplay();
 }
@@ -551,8 +621,8 @@ void display()
   	displayOSD();
 
 	displayProjectile();
-	
-	//displayLboatMissile();
+	displayRboatMissile();
+	displayLboatMissile();
  	gluErrorString(glGetError());
 	glutSwapBuffers();
  	global.frameRate++;
@@ -691,12 +761,25 @@ void keyboardCB(unsigned char key, int x, int y)
 	  }
 	  break;
 	    /*firing island cannon*/
-	case 'e':
+	case ' ':
 	  if (!global.iCannonMove)
 	  {
 		   global.startTime = glutGet(GLUT_ELAPSED_TIME) / (float)milli;
 		   global.iCannonMove = true;
 	  }
+		break;
+	case 'e':
+	  if (!global.lCannonMove)
+	  {
+		   global.startTime = glutGet(GLUT_ELAPSED_TIME) / (float)milli;
+		   global.lCannonMove = true;
+	  }
+	case 'k':
+	if (!global.rCannonMove)
+	{
+	   global.startTime = glutGet(GLUT_ELAPSED_TIME) / (float)milli;
+	   global.rCannonMove = true;
+	}  
 		break;
 	default:
 		break;
