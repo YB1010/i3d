@@ -40,6 +40,7 @@ typedef struct {
   bool debug_normal;
   bool debug_tangent;
   bool debug_water;
+  int islandCannon;
   float lmove;
   float rmove;
   float lrotate;
@@ -55,7 +56,7 @@ typedef struct {
 
 } global_t;
 
-typedef struct 
+typedef struct
 {
 	int life;
 	bool alive;
@@ -63,13 +64,13 @@ typedef struct
 }boat;
 
 
-typedef struct 
+typedef struct
 {
 	bool alive;
 
 }cannon;
 
-typedef struct 
+typedef struct
 {
 	int life;
 	bool alive;
@@ -77,16 +78,16 @@ typedef struct
 }island;
 
 const int milli = 1000;
-global_t global={0,true,false,false,false,-0.5,0.5,30.0,150.0,0,0,0,0,0,0.2,0};
+global_t global={0,true,false,false,false,0,-0.5,0.5,30.0,150.0,0,0,0,0,0,0.2,0};
 
 void updateWater()
 {
-	
+
 	if (global.waterM_bool==true)
 	{
 		global.waterM+=WATER_SPEED;
 	}
-	
+
 	glutPostRedisplay();
 }
 
@@ -153,49 +154,32 @@ void drawVector(float x, float y,float a, float b, float s, bool normalize, floa
 }
 void drawTan(float x, float y, float s, float red, float green, float blue)
 {
-	glBegin(GL_LINES);
-	glColor3f(red,green,blue);
-	float slope;
+	  glBegin(GL_LINES);
+	  glColor3f(red,green,blue);
+	  float slope;
     float y1,x1;
-
     y=0.25*sin(2*M_PI*x+global.waterM);
-
-
     slope=getSineSlope(x);
     x1=x;
-
-
   	x1+=s;
   	y1=slope*(x1-x)+y;
-
-//y1-y=slope*(x1-x)
-
- 	drawVector(x,y,x1-x,y1-y,1,false,red,green,blue);
-
- 	glEnd();
-
+  	drawVector(x,y,x1-x,y1-y,1,false,red,green,blue);
+ 	  glEnd();
 }
+
 void drawNormal(float x, float y, float s, float red, float green, float blue)
 {
-	glBegin(GL_LINES);
-	glColor3f(red,green,blue);
-	float slope;
+	  glBegin(GL_LINES);
+	  glColor3f(red,green,blue);
+	  float slope;
     float y1,x1;
-
     y=getSineY(x);
-
     slope=getSineSlope(x);
     x1=x;
-
-
   	x1+=s;
   	y1=(slope)*(x1-x)+y;
-
-
- 	drawVector(x,y,-(y1-y),x1-x,0.1,true,0,0,1);
-
-
- 	glEnd();
+ 	  drawVector(x,y,-(y1-y),x1-x,0.1,true,0,0,1);
+ 	  glEnd();
 }
 
 void drawAxes(float length)
@@ -222,7 +206,7 @@ void displayOSD()
   char buffer[30];
   char *bufp;
   int w, h;
-    
+
   glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_LIGHTING);
@@ -231,7 +215,7 @@ void displayOSD()
   glPushMatrix();
   glLoadIdentity();
 
-  /* Set up orthographic coordinate system to match the 
+  /* Set up orthographic coordinate system to match the
      window, i.e. (0,0)-(w,h) */
   w = glutGet(GLUT_WINDOW_WIDTH);
   h = glutGet(GLUT_WINDOW_HEIGHT);
@@ -263,11 +247,11 @@ void displayOSD()
     glutBitmapCharacter(GLUT_BITMAP_9_BY_15, *bufp);
 
   /* Pop modelview */
-  glPopMatrix();  
+  glPopMatrix();
   glMatrixMode(GL_PROJECTION);
 
   /* Pop projection */
-  glPopMatrix();  
+  glPopMatrix();
   glMatrixMode(GL_MODELVIEW);
 
   /* Pop attributes */
@@ -276,9 +260,9 @@ void displayOSD()
 
 void displayWater()
 {
-	float y;
-	drawAxes(10.0);
-	glBegin(GL_QUAD_STRIP);
+	 float y;
+	 drawAxes(10.0);
+	 glBegin(GL_QUAD_STRIP);
 /*
 	if (debug_water==false)
 		{
@@ -293,58 +277,44 @@ void displayWater()
 */
 
 
-	glColor4f(0.0, 1.0, 1.0,0.5);//light blue color with transparency
-
-	float left=-1.0;
-	float right=1.0;
-	float range=2;
-
+	  glColor4f(0.0, 1.0, 1.0,0.5);//light blue color with transparency
+	  float left=-1.0;
+	  float right=1.0;
+	  float range=2;
     int seg=1000;
     float stepSize=range/seg;
 
-    for (float x = left; x <= right; x+=stepSize) {
-
-	    y=getSineY(x);
-	    glVertex3f(x, y, 0);
-
-	    if (!global.debug_water)
-	    {
-	    	
-    		glVertex3f(x,-1,0);
-	    }
-
-    }
-
-	glEnd();
-
-	float tx,ty;
-
-	if (global.debug_tangent==true)
-	{
-		for (float x = left; x <= right; x+=0.05)
+    for (float x = left; x <= right; x+=stepSize)
 		{
+	      y=getSineY(x);
+	      glVertex3f(x, y, 0);
 
-	        y=getSineY(x);
+	      if(!global.debug_water)
+	      {
+    		  glVertex3f(x,-1,0);
+	      }
+    }
+	  glEnd();
 
+	  float tx,ty;
+	  if (global.debug_tangent==true)
+	  {
+		  for (float x = left; x <= right; x+=0.05)
+		  {
+	      y=getSineY(x);
 		    drawTan(x,y,0.1,1,0,0);
-		}
-
-	}
+	  	}
+	  }
 
 	if (global.debug_normal==true)
 	{
 		for (float x = left; x <= right; x+=0.05)
 		{
 			y=getSineY(x);
-		    drawNormal(x,y,0.05,0,1,0);
+		  drawNormal(x,y,0.05,0,1,0);
 		}
 	}
-
 }
-
-
-
-
 
 void drawLeftBoat(float l, float h)
 {
@@ -363,96 +333,109 @@ void drawLeftBoat(float l, float h)
 	glVertex3f(0.025, 0.075,0.0);
 	glVertex3f(-0.025, 0.075,0.0);
 	glEnd();
-	//glutWireCube (1.0);
 
   /* boat bottom*/
 	glColor3f(1.0, 0.0, 0.0);
 	glBegin(GL_POLYGON);
-
 	glVertex3f(0.1,0.025,0.0);
-
 	glVertex3f(0.05,-0.025,0.0);
 	glVertex3f(-0.05,-0.025,0.0);
-
 	glVertex3f(-0.1,0.025,0.0);
 	glEnd();
 
-  //boat cannon
-
+  /*boat cannon*/
 	glPushMatrix();
-
 	glRotatef(global.lrotate,0,0,1.0);
 	glBegin(GL_POLYGON);
-
-
 	glVertex3f(0.1,0.005,0.0);
-
 	glVertex3f(0.1,-0.005,0.0);
 	glVertex3f(0,-0.005,0.0);
-
 	glVertex3f(0,0.005,0.0);
 	glEnd();
 
-
 	glPopMatrix();
-
 	glPopMatrix();
 }
 
 void drawRightBoat(float l, float h)
 {
-	float RBoatUpdate;
+	 float RBoatUpdate;
+	 float rotateDegree=getRotateDegree(global.rmove);
+	 drawAxes(10.0);
+	 /*boat top*/
+	 glPushMatrix();
+	 glTranslatef(global.rmove,getSineY(global.rmove),0.0);
+	 glRotatef((180/M_PI)*rotateDegree,0.0,0.0,1.0);
+	 drawAxes(0.5);
+	 glColor3f(0.0, 0.0, 1.0);
+	 glBegin(GL_POLYGON);
+	 glVertex3f(-0.025, 0.025,0.0);
+	 glVertex3f(0.025, 0.025,0.0);
+	 glVertex3f(0.025, 0.075,0.0);
+	 glVertex3f(-0.025, 0.075,0.0);
+	 glEnd();
 
-	float rotateDegree=getRotateDegree(global.rmove);
-	///
-	drawAxes(10.0);
-		//boat top
-		glPushMatrix();
-		glTranslatef(global.rmove,getSineY(global.rmove),0.0);
-		glRotatef((180/M_PI)*rotateDegree,0.0,0.0,1.0);
-		drawAxes(0.5);
-		glColor3f(0.0, 0.0, 1.0);
-		glBegin(GL_POLYGON);
-		glVertex3f(-0.025, 0.025,0.0);
-		glVertex3f(0.025, 0.025,0.0);
-		glVertex3f(0.025, 0.075,0.0);
-		glVertex3f(-0.025, 0.075,0.0);
-		glEnd();
-		//boat bottom
-	  glColor3f(0.0, 0.0, 1.0);
-	  glBegin(GL_POLYGON);
+	 /*boat bottom*/
+	 glColor3f(0.0, 0.0, 1.0);
+	 glBegin(GL_POLYGON);
+	 glVertex3f(0.1,0.025,0.0);
+	 glVertex3f(0.05,-0.025,0.0);
+	 glVertex3f(-0.05,-0.025,0.0);
+	 glVertex3f(-0.1,0.025,0.0);
+	 glEnd();
 
-	  glVertex3f(0.1,0.025,0.0);
+     /* boat cannon*/
+	 glPushMatrix();
+	 glRotatef(global.rrotate,0,0,1.0);
+	 glBegin(GL_POLYGON);
+	 glVertex3f(0.1,0.005,0.0);
+	 glVertex3f(0.1,-0.005,0.0);
+	 glVertex3f(0,-0.005,0.0);
+	 glVertex3f(0,0.005,0.0);
+	 glEnd();
 
-	  glVertex3f(0.05,-0.025,0.0);
-	  glVertex3f(-0.05,-0.025,0.0);
-
-	  glVertex3f(-0.1,0.025,0.0);
-	  glEnd();
-    // boat cannon
-
-	  glPushMatrix();
-
-	glRotatef(global.rrotate,0,0,1.0);
-	glBegin(GL_POLYGON);
-
-
-	glVertex3f(0.1,0.005,0.0);
-
-	glVertex3f(0.1,-0.005,0.0);
-	glVertex3f(0,-0.005,0.0);
-
-	glVertex3f(0,0.005,0.0);
-	glEnd();
-
-
-	glPopMatrix();
-		glPopMatrix();
+	 glPopMatrix();
+	 glPopMatrix();
 }
+
+void drawIsand()
+{
+	   drawAxes(10.0);
+	   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	   /*island body*/
+	   glPushMatrix();
+	   glBegin(GL_POLYGON);
+	   glColor4f(1.0,1.0,0.0,0.7);
+	   glVertex2f(-0.2,-2);
+	   glVertex2f(0.2, -2);
+	   glVertex2f(0.2, 0.25);
+	   glVertex2f(-0.2, 0.25);
+	   glEnd();
+	   /*island cannon*/
+	   glTranslatef(0.0, 0.25, 0.0);
+	   glRotatef(global.islandCannon, 0.0, 0.0, 1.0);
+	   glPushMatrix();
+	   glColor4f(1.0, 1.0, 0.0,0.7);
+	   glBegin(GL_POLYGON);
+	   glVertex2f(0, 0);
+	   glVertex2f(0.25, 0);
+	   glVertex2f(0.25, 0.1);
+	   glVertex2f(0, 0.1);
+	   glEnd();
+	   /*misslie*/
+	   glPushMatrix();
+	   glTranslatef(0.0, 0.05, 0.0);//missile position
+	   glColor3f(1.0,1.0,1.0);
+	   glutWireSphere(0.05, 16, 10);//missile
+	   glPopMatrix();
+	   glPopMatrix();
+	   glPopMatrix();
+}
+
 void display()
 {
 
-  glEnable(GL_BLEND);	
+  glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glClear (GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
 	/* Draw something here */
@@ -460,13 +443,10 @@ void display()
   drawLeftBoat(1.0,1.0);
   drawRightBoat(1.0,1.0);
   displayWater();
-
   displayOSD();
-
+  drawIsand();
   gluErrorString(glGetError());
-
-	glutSwapBuffers();
-
+  glutSwapBuffers();
   global.frameRate++;
 }
 
@@ -480,6 +460,7 @@ void reshape (int w, int h)
    glLoadIdentity();
    glTranslatef (0.0, 0.0, -5.0);
 }
+
 void keyboardCB(unsigned char key, int x, int y)
 {
 	switch (key)
@@ -487,6 +468,7 @@ void keyboardCB(unsigned char key, int x, int y)
 	case 27:
 		exit(EXIT_SUCCESS);
 		break;
+		/*control water motion*/
 	case '`':
 		if (global.waterM_bool==false)
 		{
@@ -497,6 +479,7 @@ void keyboardCB(unsigned char key, int x, int y)
 			global.waterM_bool=false;
 		}
 		break;
+		/*control wireframe*/
 	case 'w':
 		if (global.debug_water==false)
 		{
@@ -507,6 +490,7 @@ void keyboardCB(unsigned char key, int x, int y)
 			global.debug_water=false;
 		}
 		break;
+		/*normal vector for water*/
 	case 'n':
 		if (global.debug_normal==false)
 		{
@@ -517,6 +501,7 @@ void keyboardCB(unsigned char key, int x, int y)
 			global.debug_normal=false;
 		}
 		break;
+		/*tangent vector for water*/
 	case 't':
 		if (global.debug_tangent==false)
 		{
@@ -527,46 +512,76 @@ void keyboardCB(unsigned char key, int x, int y)
 			global.debug_tangent=false;
 		}
 		break;
-		/*control left boat*/
-   case 'a':
-	   global.lmove -= 0.1;
+		/*control left boat moves left*/
+  case 'a':
+	   if(global.lmove > -0.9)
+		 {
+			 global.lmove -= 0.1;
+		 }
 		 break;
+		 /*control left boat moves right*/
 	case 'd':
-	   global.lmove += 0.1;
+	   if(global.lmove < -0.35)
+		 {
+			  global.lmove += 0.1;
+		 }
 		 break;
-		 /*control right boat*/
+		 /*control right boat moves left*/
 	case 'j':
-	   global.rmove -=0.1;
+	   if(global.rmove > 0.35)
+		 {
+			  global.rmove -=0.1;
+		 }
 		 break;
+		 /*control right boat moves right*/
 	case 'l':
-	   global.rmove += 0.1;
+	   if(global.rmove < 0.9)
+		 {
+			  global.rmove += 0.1;
+		 }
 		 break;
+		 /*control left boat's cannon rotates anti clockwise*/
 	case 'q':
 		if (global.lrotate<180)
 		{
 			global.lrotate+=5;
 		}
 		break;
+		/*control left boat's cannon rotates clockwise*/
 	case 'Q':
 		if (global.lrotate>0)
 		{
 			global.lrotate-=5;
 		}
 		break;
+		/*contol right boat's cannon rotates clockwise*/
 	case 'o':
 		if (global.rrotate>0)
 		{
 			global.rrotate-=5;
 		}
-		
 		break;
+		/*control right boat's cannon rotates anti clockwise*/
 	case 'O':
 		if (global.rrotate<180)
 		{
 			global.rrotate+=5;
 		}
 		break;
-
+		/*control island cannon rotates anti clockwise*/
+    case 'i':
+	  if (global.islandCannon < 147)
+       {
+	     global.islandCannon += 1;
+       }
+    break;
+		/*control island cannon rotates clockwise*/
+	case 'I':
+	  if (global.islandCannon > 0)
+	  {
+		   global.islandCannon -= 1;
+	  }
+	  break;
 	default:
 		break;
 	}
@@ -575,6 +590,7 @@ void keyboardCB(unsigned char key, int x, int y)
 void myinit(void)
 {
 }
+
 int main(int argc, char** argv)
 {
 
@@ -583,17 +599,10 @@ int main(int argc, char** argv)
 	glutInitWindowSize(400, 400);
 	glutInitWindowPosition(500, 500);
 	glutCreateWindow("assignment 1");
-
 	glutKeyboardFunc(keyboardCB);
-
 	//glutReshapeFunc(reshape);
-
 	glutDisplayFunc(display);
-
-
 	glutIdleFunc(updateWater);
-
 	myinit();
-
 	glutMainLoop();
 }
