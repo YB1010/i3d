@@ -25,10 +25,14 @@
 
 typedef enum { tangent, normal }visualisation;
 
-typedef struct { float x, y; } vec2f;
+typedef struct 
+{
+	float x,y;
+}vec2f;
+
 typedef struct{vec2f r,v;} islandMissile;
 islandMissile projectile = {
-	{0.0, 0.3},
+	{0.0, 0.0},
 	{1.0, 1.0}
 };
 
@@ -259,7 +263,6 @@ void displayOSD()
 void displayWater()
 {
 	 float y;
-	 drawAxes(10.0);
 	 glBegin(GL_QUAD_STRIP);
 /*
 	if (debug_water==false)
@@ -312,6 +315,16 @@ void displayWater()
 		  drawNormal(x,y,0.05,0,1,0);
 		}
 	}
+}
+
+void displayProjectile(void)
+{
+	 glPushMatrix();
+	 glTranslatef(projectile.r.x, projectile.r.y, 0.0);
+	 //glRotatef(global.islandCannon, 0.0, 0.0, 1.0);
+	 glColor3f(1.0,1.0,1.0);
+   glutWireSphere(0.01, 16, 10);
+   glPopMatrix();
 }
 
 void drawLeftBoat(float l, float h)
@@ -403,29 +416,54 @@ void drawIsand()
 		 /*island body*/
 	   glPushMatrix();
 	   glBegin(GL_POLYGON);
-		 glColor4f(1.0,1.0,0.0,0.85);
+		 glColor4f(1.0,1.0,0.0,1);
 	   glVertex2f(-0.2,-2);
 	   glVertex2f(0.2, -2);
 	   glVertex2f(0.2, 0.25);
 	   glVertex2f(-0.2, 0.25);
 	   glEnd();
 	   /*island cannon*/
-	   glTranslatef(0.0, 0.25, 0.0);
-	   glRotatef(global.islandCannon, 0.0, 0.0, 1.0);
+		glTranslatef(0.0, 0.25, 0.0);
+	   	glRotatef(global.islandCannon, 0.0, 0.0, 1.0);
+
+
+
 	   glPushMatrix();
-	   glColor4f(1.0, 1.0, 0.0,0.7);
+	   glColor4f(1.0, 1.0, 0.0,7);
 	   glBegin(GL_POLYGON);
-	   glVertex2f(0, 0);
-	   glVertex2f(0.25, 0);
-	   glVertex2f(0.25, 0.1);
-	   glVertex2f(0, 0.1);
+	   glVertex2f(0, -0.025);
+	   glVertex2f(0.2, -0.025);
+	   glVertex2f(0.2, 0.025);
+	   glVertex2f(0, 0.025);
 	   glEnd();
 	   glPopMatrix();
 	   glPopMatrix();
+
+	   if (!global.iCannonMove)
+	   {
+
+		projectile.r.y=0.25+0.2*sin((M_PI/180)*(global.islandCannon));
+		//0.25 IS FROM THE ISLAND BODY
+		projectile.r.x=0.0+0.2*cos((M_PI/180)*(global.islandCannon));
+		
+	   	projectile.v.y=5*(projectile.r.y-0.25);
+	   	projectile.v.x=5*(projectile.r.x);
+
+
+	   }
+
+
+	   if (projectile.r.y>1||projectile.r.y<-1||projectile.r.x<-1||projectile.r.x>1)
+	{
+	   	global.iCannonMove=false;
+	}
+	   
 }
 
 void missleProjectileMotion(float dt)
 {
+
+
 	 //position
 	 projectile.r.x += projectile.v.x * dt;
 	 projectile.r.y += projectile.v.y * dt;
@@ -433,18 +471,12 @@ void missleProjectileMotion(float dt)
 	 	 projectile.r.y += 0.25 * sin(global.islandCannon);*/
 
 	//Velocity
+
+
 	projectile.v.y += g * dt;
 }
 
-void displayProjectile(void)
-{
-	 glPushMatrix();
-	 glTranslatef(projectile.r.x, projectile.r.y, 0.0);
-	 //glRotatef(global.islandCannon, 0.0, 0.0, 1.0);
-	 glColor3f(1.0,1.0,1.0);
-   glutWireSphere(0.05, 16, 10);
-   glPopMatrix();
-}
+
 
 void lboatMissle(float dt)
 {
@@ -476,13 +508,23 @@ void update()
      float t, dt;
     if (!global.iCannonMove)
 	   return;
-    t = glutGet(GLUT_ELAPSED_TIME) / (float)milli - global.startTime;
+    t = (glutGet(GLUT_ELAPSED_TIME) / (float)milli) - global.startTime;
+    printf("%f\n",t );
+
     if (lastT < 0.0)
     {
 	   lastT = t;
 	   return;
     }
     dt = t - lastT;
+    if (dt<0)
+    {
+    	lastT = t;
+    	return;
+    }
+
+	printf("rx:%f,ry:%f,,vx:%f,:vy:%f,,dt:%f  \n",projectile.r.x,projectile.r.y,projectile.v.x,projectile.v.y,dt );
+
  /*if (global.debug)
 	 printf("%f %f\n", t, dt);*/
 	missleProjectileMotion(dt);
@@ -493,32 +535,38 @@ void update()
 void display()
 {
 
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glClear (GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
+ 	glEnable(GL_BLEND);
+ 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+ 	glClear (GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
 	/* Draw something here */
 
-  drawLeftBoat(1.0,1.0);
-  drawRightBoat(1.0,1.0);
-  displayWater();
-  displayOSD();
+	drawAxes(10.0);
+
+
+ 	drawLeftBoat(1.0,1.0);
+ 	drawRightBoat(1.0,1.0);
+
 	drawIsand();
+ 	displayWater();
+  	displayOSD();
+
 	displayProjectile();
+	
 	//displayLboatMissile();
-  gluErrorString(glGetError());
+ 	gluErrorString(glGetError());
 	glutSwapBuffers();
-  global.frameRate++;
+ 	global.frameRate++;
 }
 
 void reshape (int w, int h)
 {
-   glViewport (0, 0, (GLsizei) w, (GLsizei) h);
-   glMatrixMode (GL_PROJECTION);
-   glLoadIdentity ();
-   gluPerspective(65.0, (GLfloat) w/(GLfloat) h, 1.0, 20.0);
-   glMatrixMode(GL_MODELVIEW);
-   glLoadIdentity();
-   glTranslatef (0.0, 0.0, -5.0);
+	glViewport (0, 0, (GLsizei) w, (GLsizei) h);
+	glMatrixMode (GL_PROJECTION);
+	glLoadIdentity ();
+	gluPerspective(65.0, (GLfloat) w/(GLfloat) h, 1.0, 20.0);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glTranslatef (0.0, 0.0, -5.0);
 }
 
 void keyboardCB(unsigned char key, int x, int y)
