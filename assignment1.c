@@ -93,11 +93,12 @@ typedef struct
 {
 	int life;
 	bool alive;
-	float lastFiringTime;
+	int x1;
+	int x2;
 	//to be fill
 }boat;
-boat boatL={5,true,-(BOAT_M_CD)};
-boat boatR={5,true,-(BOAT_M_CD)};
+boat leftBoat = {10,true};
+boat rightBoat = {10, true};
 
 typedef struct
 {
@@ -109,14 +110,122 @@ typedef struct
 typedef struct
 {
 	int life;
+	//int lifeMinus;
+	float x1;
+	float x2;
 	bool alive;
 	//to be fill
-}island;
+}Island;
+Island island = {100,0.5,0.5,true};
 
 const int milli = 1000;
 const float g = -4.9;
 global_t global={0,false,false,true,false,false,false,30.0,-0.5,0.5,30.0,150.0,0,0,0,0,0,0.2,0,0,0,-1};
 
+/* health for island and boats
+void islandHealth()
+{
+	if(island.life == 0)
+	{
+		island.alive = false;
+	}
+	else if(island.life > 0)
+	{
+	    island.alive = true;	
+	}	
+	
+	if(island.alive)
+	{
+		//glTranslatef(-0.9,0.,0);
+	    glScalef(0.5f,0.5f);
+        glBegin(GL_POLYGON);
+	    glColor3f(1.0,1.0,0.0);
+	    glVertex2f(-0.5,0.0);
+	    glVertex2f(island.x1,0.0);
+	    glVertex2f(island.x2,0.1);
+	    glVertex2f(-0.5,0.1);
+	    glEnd();
+	    if()//be hitted
+	    {
+		   island.life-=1;
+		   glBegin(GL_POLYGON);
+	       glColor3f(1.0,1.0,0.0);
+	       glVertex2f(-0.5,0.0);
+	       glVertex2f(island.x1-=0.1,0.0);
+	       glVertex2f(island.x2-=0.1,0.1);
+	       glVertex2f(-0.5,0.1);
+	       glEnd();
+		  //island.lifeMinus += 1;
+	    }
+	}
+	else//died
+	{
+		char buffer[30];
+		snprintf(buffer, sizeof buffer,"Game Over\n");
+		global.waterM_bool=false;
+	}
+}
+
+void lboatHealth()
+{   
+    if(leftBoat.life == 0)
+	{
+		leftBoat.alive = false;
+	}
+	else if(leftBoat.life > 0)
+	{
+		leftBoat.alive = true;
+	}
+	
+	if(leftBoat.alive)
+	{
+		//glTranslatef(-0.9,0.9,0);
+	    glScalef(0.5f,0.5f);
+        glBegin(GL_POLYGON);
+	    glColor3f(1.0,0.0,0.0);
+	    glVertex2f(-0.5,0.0);
+	    glVertex2f(0.5,0.0);
+	    glVertex2f(0.5,0.1);
+	    glVertex2f(-0.5,0.1);
+	    glEnd();
+		if()//be hitted
+		{
+		    leftBoat.life-=1;	
+		}
+	}
+	else//died
+	{
+		char buffer[30];
+		snprintf(buffer, sizeof buffer,"Game Over\n");
+		global.waterM_bool=false;
+	}
+}
+
+void rboatHealth()
+{
+	if(rightBoat.life==0)
+	{
+		rightBoat.alive = false;
+	}
+	else if(rightBoat.life>0)
+	{
+		rightBoat.alive = true;
+	}
+	
+	if(rightBoat.alive)
+	{
+		if()//be hitted
+		{
+			rightBoat.life-=1;
+		}
+	}
+	else//died
+	{
+		char buffer[30];
+		snprintf(buffer, sizeof buffer,"Game Over\n");
+		global.waterM_bool=false;
+	}
+}*/
 void MissileInit()
 {
 	for (int i = 0; i < LBOAT_M_NUM; i++)
