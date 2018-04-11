@@ -24,10 +24,14 @@
 #endif
 
 #define STRENGTH 30.0
+#define LBOAT_M_NUM 100
+#define L_MISSILE 1
 
 #define BOAT_M_P 0.1
 
 typedef enum { tangent, normal }visualisation;
+
+
 
 typedef struct 
 {
@@ -38,19 +42,20 @@ typedef struct
 {
 	vec2f r,v;
 	bool shooted;
-
+	int type;
 
 } Missile;
-Missile islandMissile;
 
-Missile lboatMissile;
+Missile islandMissile;
+Missile lboatMissile[LBOAT_M_NUM];
 Missile rboatMissile;
+
+
 
 typedef struct
  {
     float waterM;
 	bool iCannonMove;
-    bool lCannonMove;
     bool rCannonMove;
     bool waterM_bool;
     bool debug_normal;
@@ -89,6 +94,7 @@ typedef struct
 
 }cannon;
 
+
 typedef struct
 {
 	int life;
@@ -98,9 +104,21 @@ typedef struct
 
 const int milli = 1000;
 const float g = -9.8;
-global_t global={0,false,false,false,true,false,false,false,30.0,-0.5,0.5,30.0,150.0,0,0,0,0,0,0.2,0,0,0,-1};
+global_t global={0,false,false,true,false,false,false,30.0,-0.5,0.5,30.0,150.0,0,0,0,0,0,0.2,0,0,0,-1};
 
+void MissileInit()
+{
+	for (int i = 0; i < LBOAT_M_NUM; i++)
+	{
+		lboatMissile[i].r.x=0;
+		lboatMissile[i].r.y=0;
+		lboatMissile[i].v.x=0;
+		lboatMissile[i].v.y=0;
+		lboatMissile[i].type=L_MISSILE;
+		lboatMissile[i].shooted=false;
+	}
 
+}
 
 float getSineY(float x)
 {
@@ -193,6 +211,34 @@ void drawNormal(float x, float y, float s, float red, float green, float blue)
  	glEnd();
 }
 
+void UpdateMissile(Missile *object)
+{
+	if (object[0].type == 1)
+	{
+		for (int i = 0; i < LBOAT_M_NUM; i++)
+		{
+			if (!(object[i].shooted))
+			{
+
+				object[i].r.y=getSineY(global.lmove)+sin(getRotateDegree(global.lmove)+((M_PI/180)*global.lrotate))*0.1;
+					//reverse the previsou translatef and rotates.
+				object[i].r.x=global.lmove+cos(getRotateDegree(global.lmove)+((M_PI/180)*global.lrotate)) * BOAT_M_P;
+					
+				object[i].v.y=STRENGTH*(-getSineY(global.lmove)+object[i].r.y);//get the distance between the cannon end and the center of boat.
+				object[i].v.x=STRENGTH*(-global.lmove+object[i].r.x);
+
+
+			}
+
+
+			if (object[i].r.y>1||object[i].r.y<-1||object[i].r.x<-1||object[i].r.x>1)
+			{
+			   	object[i].shooted=false;
+			}
+		}
+		
+	}
+}
 void drawAxes(float length)
 {
   glBegin(GL_LINES);
@@ -366,27 +412,11 @@ void drawLeftBoat(float l, float h)
 	glPopMatrix();
 	glPopMatrix();
 
-	if (!global.lCannonMove)
-	{
 
-	lboatMissile.r.y=getSineY(global.lmove)+sin(getRotateDegree(global.lmove)+((M_PI/180)*global.lrotate))*0.1;
-		//reverse the previsou translatef and rotates.
-	lboatMissile.r.x=global.lmove+cos(getRotateDegree(global.lmove)+((M_PI/180)*global.lrotate)) * BOAT_M_P;
-		
-	lboatMissile.v.y=STRENGTH*(-getSineY(global.lmove)+lboatMissile.r.y);//get the distance between the cannon end and the center of boat.
-	lboatMissile.v.x=STRENGTH*(-global.lmove+lboatMissile.r.x);
-
-
-	}
-
-
-	   if (lboatMissile.r.y>1||lboatMissile.r.y<-1||lboatMissile.r.x<-1||lboatMissile.r.x>1)
-	{
-	   	global.lCannonMove=false;
-	   	lboatMissile.shooted=false;
-	}
+	UpdateMissile(lboatMissile);
 
 }
+
 
 void drawRightBoat(float l, float h)
 {
@@ -503,6 +533,7 @@ void drawIsand()
 
 void displayPrediction(Missile object)
 {
+
 	if (object.shooted)
 	{
 		float t=0;
@@ -523,13 +554,29 @@ void displayPrediction(Missile object)
 		glEnd();
 	}
 
+
 }
 
 void projectile2DMotion(Missile *object,float dt)
 {
-	object->r.x += object->v.x * dt;
-	object->r.y += object->v.y * dt;
-	object->v.y += g * dt;
+	if (object[0].type==1)
+	{
+		for (int i = 0; i < LBOAT_M_NUM; i++)
+		{
+
+			object[i].r.x += object[i].v.x * dt;
+			object[i].r.y += object[i].v.y * dt;
+			object[i].v.y += g * dt;
+			printf("x:%f,y:%f\n",object[i].r.x,object[i].r.x );
+		}
+	}
+	else
+	{
+		object->r.x += object->v.x * dt;
+		object->r.y += object->v.y * dt;
+		object->v.y += g * dt;
+	}
+	
 }
 
 void displayIslandMissile(void)
@@ -546,18 +593,26 @@ void displayIslandMissile(void)
 	 
 }
 
-void displayLboatMissile(void)
+void displayLboatMissile(Missile *object)
 {
-	if (global.lCannonMove)
+	for (int i = 0; i < LBOAT_M_NUM; i++)
 	{
-		glPushMatrix();
-		glTranslatef(lboatMissile.r.x, lboatMissile.r.y, 0.0);
-		//glRotatef(global.islandCannon, 0.0, 0.0, 1.0);
-		glColor3f(1.0,1.0,1.0);
-		glutWireSphere(0.005, 16, 10);
-		glPopMatrix();
-	}
+		if (object[i].shooted)
+		{
+			glPushMatrix();
+			glTranslatef(object[i].r.x, object[i].r.y, 0.0);
+			//glRotatef(global.islandCannon, 0.0, 0.0, 1.0);
+			glColor3f(1.0,1.0,1.0);
+			glutWireSphere(0.005, 16, 10);
+			glPopMatrix();
 
+			
+		}
+
+
+
+	}
+	
 }
 void displayRboatMissile(void)
 {
@@ -604,7 +659,8 @@ void update()
 	
 	projectile2DMotion(&islandMissile,global.dt);
 	projectile2DMotion(&rboatMissile,global.dt);
-	projectile2DMotion(&lboatMissile,global.dt);
+
+	projectile2DMotion(lboatMissile,global.dt);
 
     global.lastT = global.t;
 /*problem here is the continuous firing and missile direction cannot follow the cannon direction*/
@@ -622,14 +678,20 @@ void display()
 
 
 	displayIslandMissile();
+
 	displayRboatMissile();
-	displayLboatMissile();
+
+	displayLboatMissile(lboatMissile);
 
  	drawLeftBoat(1.0,1.0);
  	drawRightBoat(1.0,1.0);
- 	displayPrediction(lboatMissile);
+
  	displayPrediction(rboatMissile);
  	displayPrediction(islandMissile);
+ 	for (int i = 0; i < LBOAT_M_NUM; i++)
+ 	{
+ 		displayPrediction(lboatMissile[i]);
+ 	}
 	drawIsand();
  	displayWater();
   	displayOSD();
@@ -780,12 +842,18 @@ void keyboardCB(unsigned char key, int x, int y)
 	  }
 		break;
 	case 'e':
-	  if (!global.lCannonMove)
-	  {
-		   global.startTime = glutGet(GLUT_ELAPSED_TIME) / (float)milli;
-		   global.lCannonMove = true;
-		   lboatMissile.shooted = true;
-	  }
+		for (int i = 0; i < LBOAT_M_NUM; i++)
+		{
+			if (!lboatMissile[i].shooted)
+	 		{
+				global.startTime = glutGet(GLUT_ELAPSED_TIME) / (float)milli;
+
+				lboatMissile[i].shooted = true;
+				printf("asd\n");
+				break;
+			}
+		}
+	  
 	  break;
 	case 'k':
 	if (!global.rCannonMove)
@@ -813,6 +881,7 @@ int main(int argc, char** argv)
 	glutInitWindowSize(400, 400);
 	glutInitWindowPosition(500, 500);
 	glutCreateWindow("assignment 1");
+	MissileInit();
 	glutKeyboardFunc(keyboardCB);
 	//glutReshapeFunc(reshape);
 	glutDisplayFunc(display);
