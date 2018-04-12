@@ -20,7 +20,7 @@
 #endif
 
 #ifndef WATER_SPEED
-#define WATER_SPEED 0.01;
+#define WATER_SPEED 1;
 #endif
 
 #define STRENGTH 10.0
@@ -781,14 +781,7 @@ void displayMissile(Missile *object,int number,float size)
 
 void update()
 {
-    /*update water*/
-	if (global.waterM_bool==true)
-	{
-		global.waterM+=WATER_SPEED;
-	}
-    glutPostRedisplay();
-  /*update island missle*/
-
+	  float time = 0.0;
 
     global.t = (glutGet(GLUT_ELAPSED_TIME) / (float)milli) - global.startTime;
 
@@ -803,12 +796,26 @@ void update()
     	global.lastT = global.t;
     	return;
     }
+		if (global.waterM_bool==true)
+		{
+			global.waterM+=global.dt*WATER_SPEED;
+		}
 	projectile2DMotion(islandMissile,global.dt);
 	projectile2DMotion(rboatMissile,global.dt);
 
 	projectile2DMotion(lboatMissile,global.dt);
 
   global.lastT = global.t;
+
+	time = global.t - global.lastFrameRateT;
+	if(time>global.frameRateInterval)
+	{
+		global.lastFrameRateT = global.t;
+		global.frameRate = global.frames/time;
+		global.frames = 0;
+
+	}
+
 	glutPostRedisplay();
 }
 void display()
@@ -846,7 +853,7 @@ void display()
 
  	gluErrorString(glGetError());
 	glutSwapBuffers();
- 	global.frameRate++;
+ 	global.frames++;
 }
 
 void keyboardCB(unsigned char key, int x, int y)
