@@ -23,7 +23,7 @@
 #define WATER_SPEED 0.01;
 #endif
 
-#define STRENGTH 25.0
+#define STRENGTH 10.0
 #define BOAT_M_CD 0
 //#define ISLAND_M_CD		//value of Missile's speed
 #define LBOAT_M_NUM 100		//max Missile number
@@ -51,14 +51,9 @@ typedef struct
 	int damage;
 } Missile;
 
-
-
-
 Missile islandMissile[ISLAND_M_NUM];
 Missile lboatMissile[LBOAT_M_NUM];
 Missile rboatMissile[RBOAT_M_NUM];
-
-
 
 typedef struct
  {
@@ -113,7 +108,7 @@ typedef struct
 
 
 const int milli = 1000;
-const float g = -4.9;
+const float g = -0.98;
 
 
 void drawAxes(float length)
@@ -167,27 +162,6 @@ void islandHealth()
 		glPopMatrix();
 	}
 }
-	   /* if()//be hitted
-	    {
-		   island.life-=1;
-		   glBegin(GL_POLYGON);
-	       glColor3f(1.0,1.0,0.0);
-	       glVertex2f(-0.5,0.0);
-	       glVertex2f(island.x1-=0.1,0.0);
-	       glVertex2f(island.x2-=0.1,0.1);
-	       glVertex2f(-0.5,0.1);
-	       glEnd();
-		  //island.lifeMinus += 1;
-	    }
-	}
-	else//died
-	{
-		char buffer[30];
-		snprintf(buffer, sizeof buffer,"Game Over\n");
-		global.waterM_bool=false;
-	}
-}
-*/
 
 void lboatHealth()
 {
@@ -210,19 +184,6 @@ void lboatHealth()
 			glPopMatrix();
 		}
 	}
-  /*  if(collionsion())//be hitted
-		{
-		    leftBoat.life-=1;
-		}
-
-
-	else//died
-	{
-		char buffer[30];
-		snprintf(buffer, sizeof buffer,"Game Over\n");
-		global.waterM_bool=false;
-	}
-}*/
 
 void rboatHealth()
 {
@@ -243,21 +204,6 @@ void rboatHealth()
 		glPopMatrix();
 	}
 }
-/*
-	if(rightBoat.alive)
-	{
-		if()//be hitted
-		{
-			rightBoat.life-=1;
-		}
-	}
-	else//died
-	{
-		char buffer[30];
-		snprintf(buffer, sizeof buffer,"Game Over\n");
-		global.waterM_bool=false;
-	}
-}*/
 
 void MissileInit()
 {
@@ -409,21 +355,21 @@ bool collionsion(Missile aim)
 		float ldistance = sqrt(((lx-aim.r.x)*(lx-aim.r.x))+((ly-aim.r.y)*(ly-aim.r.y)));
 
 
-		if (aim.r.y<=0.25 && aim.r.x<=0.2 && aim.r.x>=-0.2)
+		if (aim.r.y<0.25 && aim.r.x<0.2 && aim.r.x>-0.2)
 		{
 
 			island.life -= aim.damage;
 			printf("hitting island %i\n",a++);
 			return false;
 		}
-		if (ldistance<=0.1 && aim.r.x<0)
+		if (ldistance<0.1 && aim.r.x<0)
 		{
 			printf("hitting lboat %i\n",b++);
 
 			leftBoat.life -= aim.damage;
 			return false;
 		}
-		if (rdistance<=0.1 && aim.r.x>0)
+		if (rdistance<0.1 && aim.r.x>0)
 		{
 
 			rightBoat.life -= aim.damage;
@@ -461,8 +407,8 @@ void UpdateMissile(Missile *object)
 				//0.25 IS FROM THE ISLAND BODY
 				object[i].r.x=0.0+0.15*cos((M_PI/180)*(global.islandCannon));
 
-			   	object[i].v.y=15*(object[i].r.y-0.25);
-			   	object[i].v.x=15*(object[i].r.x);
+			   	object[i].v.y=STRENGTH*(object[i].r.y-0.25);
+			   	object[i].v.x=STRENGTH*(object[i].r.x);
 			}
 				if ((object[i].shooted=collionsion(object[i]))==true)
 				{
@@ -479,9 +425,9 @@ void UpdateMissile(Missile *object)
 			if (!object[i].shooted)
 			{
 
-				object[i].r.y=getSineY(global.rmove)+sin(getRotateDegree(global.rmove)+((M_PI/180)*global.rrotate))*0.1;
+				object[i].r.y=getSineY(global.rmove)+sin(getRotateDegree(global.rmove)+((M_PI/180)*global.rrotate))*0.11;
 					//reverse the previsou translatef and rotates.
-				object[i].r.x=global.rmove+cos(getRotateDegree(global.rmove)+((M_PI/180)*global.rrotate))*BOAT_M_P;
+				object[i].r.x=global.rmove+cos(getRotateDegree(global.rmove)+((M_PI/180)*global.rrotate))* 0.11;
 
 				object[i].v.y=STRENGTH*(-getSineY(global.rmove)+object[i].r.y);//get the distance between the cannon end and the center of boat.
 				object[i].v.x=STRENGTH*(-global.rmove+object[i].r.x);
@@ -491,7 +437,7 @@ void UpdateMissile(Missile *object)
 
 			if ((object[i].shooted=collionsion(object[i]))==true)
 			{
-			
+
 				object[i].damage=1;
 			}
 		}
@@ -504,9 +450,9 @@ void UpdateMissile(Missile *object)
 			if (!(object[i].shooted))
 			{
 
-				object[i].r.y=getSineY(global.lmove)+sin(getRotateDegree(global.lmove)+((M_PI/180)*global.lrotate))*0.1;
+				object[i].r.y=getSineY(global.lmove)+sin(getRotateDegree(global.lmove)+((M_PI/180)*global.lrotate))*0.11;
 					//reverse the previsou translatef and rotates.
-				object[i].r.x=global.lmove+cos(getRotateDegree(global.lmove)+((M_PI/180)*global.lrotate)) * 0.1;
+				object[i].r.x=global.lmove+cos(getRotateDegree(global.lmove)+((M_PI/180)*global.lrotate)) * 0.11;
 
 				object[i].v.y=STRENGTH*(-getSineY(global.lmove)+object[i].r.y);//get the distance between the cannon end and the center of boat.
 				object[i].v.x=STRENGTH*(-global.lmove+object[i].r.x);
@@ -654,8 +600,8 @@ void drawLeftBoat(float l, float h)
 	glPushMatrix();
 	glRotatef(global.lrotate,0,0,1.0);
 	glBegin(GL_POLYGON);
-	glVertex3f(0.1,0.005,0.0);
-	glVertex3f(0.1,-0.005,0.0);
+	glVertex3f(0.11,0.005,0.0);
+	glVertex3f(0.11,-0.005,0.0);
 	glVertex3f(0,-0.005,0.0);
 	glVertex3f(0,0.005,0.0);
 	glEnd();
@@ -700,8 +646,8 @@ void drawRightBoat(float l, float h)
 		glPushMatrix();
 		glRotatef(global.rrotate,0,0,1.0);
 		glBegin(GL_POLYGON);
-		glVertex3f(0.1,0.005,0.0);
-		glVertex3f(0.1,-0.005,0.0);
+		glVertex3f(0.11,0.005,0.0);
+		glVertex3f(0.11,-0.005,0.0);
 		glVertex3f(0,-0.005,0.0);
 		glVertex3f(0,0.005,0.0);
 		glEnd();
@@ -712,6 +658,8 @@ void drawRightBoat(float l, float h)
 		UpdateMissile(rboatMissile);
 
 }
+
+
 
 void drawIsand()
 {
@@ -767,8 +715,6 @@ void displayPrediction(Missile object)
 			object.r.y += object.v.y * t;
 			object.v.y += g * t;
 
-
-
 			t+=0.0001;
 
 
@@ -815,9 +761,9 @@ void projectile2DMotion(Missile *object,float dt)
 
 }
 
-void displayIslandMissile(Missile *object)
+void displayMissile(Missile *object,int number,float size)
 {
-	for (int i = 0; i < ISLAND_M_NUM; i++)
+	for (int i = 0; i < number; i++)
 	{
 		if (object[i].shooted)
 		{
@@ -825,51 +771,13 @@ void displayIslandMissile(Missile *object)
 			glTranslatef(object[i].r.x, object[i].r.y, 0.0);
 			//glRotatef(global.islandCannon, 0.0, 0.0, 1.0);
 			glColor3f(1.0,1.0,1.0);
-			glutWireSphere(0.01, 16, 10);
+			glutWireSphere(size, 16, 10);
 			glPopMatrix();
-
 
 		}
 	}
-
 }
 
-void displayLboatMissile(Missile *object)
-{
-	for (int i = 0; i < LBOAT_M_NUM; i++)
-	{
-		if (object[i].shooted)
-		{
-			glPushMatrix();
-			glTranslatef(object[i].r.x, object[i].r.y, 0.0);
-			//glRotatef(global.islandCannon, 0.0, 0.0, 1.0);
-			glColor3f(1.0,1.0,1.0);
-			glutWireSphere(0.005, 16, 10);
-			glPopMatrix();
-
-
-		}
-	}
-
-}
-void displayRboatMissile(Missile *object)
-{
-	for (int i = 0; i < RBOAT_M_NUM; i++)
-	{
-		if (object[i].shooted)
-		{
-			glPushMatrix();
-			glTranslatef(object[i].r.x, object[i].r.y, 0.0);
-			//glRotatef(global.islandCannon, 0.0, 0.0, 1.0);
-			glColor3f(1.0,1.0,1.0);
-			glutWireSphere(0.005, 16, 10);
-			glPopMatrix();
-
-
-		}
-	}
-
-}
 
 void update()
 {
@@ -895,36 +803,24 @@ void update()
     	global.lastT = global.t;
     	return;
     }
-
- /*if (global.debug)
-	 printf("%f %f\n", t, dt);*/
-
 	projectile2DMotion(islandMissile,global.dt);
 	projectile2DMotion(rboatMissile,global.dt);
 
 	projectile2DMotion(lboatMissile,global.dt);
 
-    global.lastT = global.t;
-/*problem here is the continuous firing and missile direction cannot follow the cannon direction*/
+  global.lastT = global.t;
 	glutPostRedisplay();
 }
 void display()
 {
-
-
  	glEnable(GL_BLEND);
  	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
  	glClear (GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
 	/* Draw something here */
-
 	drawAxes(10.0);
-
-
-	displayIslandMissile(islandMissile);
-
-	displayRboatMissile(rboatMissile);
-
-	displayLboatMissile(lboatMissile);
+	displayMissile(islandMissile,ISLAND_M_NUM,0.01);
+	displayMissile(lboatMissile,LBOAT_M_NUM,0.01);
+	displayMissile(rboatMissile,RBOAT_M_NUM,0.01);
 
  	drawLeftBoat(1.0,1.0);
 	lboatHealth();
@@ -953,25 +849,15 @@ void display()
  	global.frameRate++;
 }
 
-void reshape (int w, int h)
-{
-	glViewport (0, 0, (GLsizei) w, (GLsizei) h);
-	glMatrixMode (GL_PROJECTION);
-	glLoadIdentity ();
-	gluPerspective(65.0, (GLfloat) w/(GLfloat) h, 1.0, 20.0);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glTranslatef (0.0, 0.0, -5.0);
-}
-
 void keyboardCB(unsigned char key, int x, int y)
 {
 	switch (key)
 	{
 	case '-':
-	if (global.tess>=4)
+	if (global.tess>4)
 		global.tess/=2;
 		break;
+
 	case '+':
 		global.tess*=2;
 
@@ -1141,10 +1027,6 @@ void keyboardCB(unsigned char key, int x, int y)
 	}
 }
 
-void myinit(void)
-{
-}
-
 int main(int argc, char** argv)
 {
 
@@ -1158,6 +1040,6 @@ int main(int argc, char** argv)
 	//glutReshapeFunc(reshape);
 	glutDisplayFunc(display);
 	glutIdleFunc(update);
-	
+
 	glutMainLoop();
 }
