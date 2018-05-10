@@ -70,37 +70,31 @@ static float lastX = 0, lastY = 0;
 static float rotateX = 0.0, rotateY = 0.0;
 static bool lighting = false;
 static float zoom = 0.5;
+static GLdouble ex, ey, ez, upx, upy, upz;
 
 typedef enum { solid, wireframe } renderMode_t;
 renderMode_t renderMode = solid;
 
 void init(void) 
 {
-  GLfloat ambientLight[] = { 0.2f, 0.2f, 0.2f, 1.0f };
-  GLfloat diffuseLight[] = { 0.8f, 0.8f, 0.8, 1.0f };
-  GLfloat specularLight[] = { 0.5f, 0.5f, 0.5f, 1.0f };
-  GLfloat position[] = { -1.5f, 1.0f, -4.0f, 1.0f };
-
-  glClearColor (0.0, 0.0, 0.0, 0.0);
-  glShadeModel (GL_SMOOTH);
-// Somewhere in the initialization part of your program…
-
+      glClearColor(0.0,0.0,0.0,0.0);
+    GLfloat mat_specular[] = { 0.2, 0.2, 0.2, 1 };
+    GLfloat mat_ambient[] = {1.0,1.0,1.0,1.0};
+    GLfloat mat_diffuse[] = {0.1,0.5,0.8,1.0};
+    GLfloat mat_shininess[] = { 50.0 };
+  //  glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR,mat_specular);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_diffuse);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
+    glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
-  glEnable(GL_DEPTH_TEST);
 
-    // Assign created components to GL_LIGHT0
-    glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, specularLight);
-    glLightfv(GL_LIGHT0, GL_POSITION, position);
 }
 
 
 void drawAxes(float length)
 {
-
-  glPushAttrib(GL_CURRENT_BIT);
 
   glBegin(GL_LINES);
 
@@ -121,48 +115,8 @@ void drawAxes(float length)
 
   glEnd();
 
-  glPopAttrib();
 }
 
-void water()
-{
-    float y;
-    float x;
-
-
-    printf("display\n");
-
-
-
-    drawAxes(1.0);
-    glBegin(GL_LINE_STRIP);
-    glColor3f(1,1,1);
-    float left=-1.0;
-    float right=1.0;
-    float range=right-left;
-    int seg=100;
-    float stepSize=range/seg;
-
-    for (float x = left; x <= right; x+=stepSize) {
-      float a,b;
-
-      y=sin(M_PI*x);
-      
-
-      a=x;
-      
-      for (; y < right;y+=stepSize)
-      {
-        float z;
-        z=sin(M_PI*y);
-        glVertex3f(x, y, z);
-      }
-
-      
-
-    }
-    glEnd();
-}
 
 void drawVector(float x, float y,float z,float a, float b,float c, float s, bool normalize, float red, float green, float blue)
 {
@@ -193,35 +147,122 @@ void drawVector(float x, float y,float z,float a, float b,float c, float s, bool
   glEnd();
   glPopAttrib();
 }
+
+/*
+return y value based on x on sine wave
+*/
+float getSineY(float x)
+{
+  float y;
+  y = 0.25*sin(4 *x);
+  return y;
+}
+
+/*
+return gredient value based on x on sine wave
+*/
+float getSineSlope(float x)
+{
+  float slope;
+  slope=cos(4*x);
+  return slope;
+}
+
+/*
+return degree based on x on sine wave
+which needed to rotate such degree to become the tangent.
+*/
+float getRotateDegree(float x)
+{
+  float slope;
+  float degree;
+  float x1,y1;
+  float y;
+
+  y=getSineY(x);
+  slope=getSineSlope(x);
+
+  x1=x;
+
+
+  x1+=0.01;
+  y1=slope*(x1-x)+y;
+
+  y1-=y;
+  x1-=x;
+
+  degree=atan2(y1,x1);
+
+  return degree;
+}
+void drawTan(float x, float y, float z, float s, float red, float green, float blue)
+{
+  glBegin(GL_LINES);
+  glColor3f(red,green,blue);
+  float slope;
+  float y1,x1;
+  y=getSineY(x);
+  slope=getSineSlope(x);
+  x1=x;
+  x1+=s;
+  y1=slope*(x1-x)+y;
+  drawVector(x,y,z,x1-x,y1-y,0,0.1,false,red,green,blue);
+  glEnd();
+}
+
+void drawNormal(bool isDraw,float x, float y, float z, float s, float red, float green, float blue)
+{
+  glColor3f(red,green,blue);
+  float slope;
+  float y1,x1;
+  y=getSineY(x);
+  slope=getSineSlope(x);
+  x1=x;
+  x1+=s;
+  y1=(slope)*(x1-x)+y;
+
+  if (isDraw)
+  {
+    glBegin(GL_LINES);
+    drawVector(x,y,z,-(y1-y),x1-x,0,0.1,false,0,0,1);
+    glEnd();
+  }
+  else
+  {
+    glNormal3f(-(y1-y),x1-x,0);
+  }
+  
+}
 void display(void)
 {
 
+  GLfloat position[] = { 0.0, 0.0, 1.5, 1.0 };
   glClear (GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix();
 
-  glDisable (GL_LIGHTING);
   /* Global transformations */
   glScalef(zoom,zoom,zoom);
-  glTranslatef (-1.0, 0.0, 0.0);
   glRotatef (rotateX, 1.0, 0.0, 0.0);
   glRotatef (rotateY, 0.0, 1.0, 0.0);
-
+  glLightfv (GL_LIGHT0, GL_POSITION, position);
   /* Global coordinate system */
+  glDisable(GL_LIGHTING);
   drawAxes(10.0);
-  float n=8;
+  float n=16;
   float x,y,z;
-
+  glEnable(GL_LIGHTING);
+  // glutSolidTorus(0.25, 1.0, 8, 8);
   float xStep = 2.0 / n;                
   float zStep = 2.0 / n; // xStep and zStep are the same, but could be different
           for (int j = 0; j < n; j++) {
             glBegin(GL_QUAD_STRIP);
             z = -1.0 + j * zStep;
             for (int i = 0; i <= n; i++) {
-              /* What are these calculations doing? */
               x = -1.0 + i * xStep;
 
               y = 0.25*sin(4 *x);
+              drawNormal(false,x,y,z,1,1,1,0);
               glVertex3f(x,y,z);
 
               // Replace this comment with calculation to work out next z value
@@ -230,19 +271,7 @@ void display(void)
             }
             glEnd();                 
           }
-          for (int j = 0; j < n; j++) {
           
-            z = -1.0 + j * zStep;
-            for (int i = 0; i <= n; i++) {
-              /* What are these calculations doing? */
-              x = -1.0 + i * xStep;
-          
-              // Replace this comment with calculation to work out next z value
-              drawVector(x,0,z,0,1,0,1,true,1,1,0);
-          
-            }
-                        
-          }
 
  // glEnable (GL_LIGHTING);
 
@@ -360,6 +389,11 @@ void keyboard (unsigned char key, int x, int y)
   }
 }
 
+void idle()
+{
+  glutPostRedisplay();
+}
+
 void menu(int value)
 {
     switch (value) {
@@ -378,7 +412,7 @@ void menu(int value)
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
       break;
     default:
-	break;
+  break;
     }
     glutPostRedisplay();
 }
@@ -388,7 +422,7 @@ int main(int argc, char** argv)
 
   /* Create window and initialise */
   glutInit(&argc, argv);
-  glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB);
+  glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
   glutInitWindowSize (500, 500); 
   glutInitWindowPosition (100, 100);
   glutCreateWindow (argv[0]);
@@ -401,16 +435,16 @@ int main(int argc, char** argv)
   glutSpecialUpFunc(special);
   glutMouseFunc(mouse);
   glutMotionFunc(motion);
-
-  /* Create menus */
-   glutCreateMenu(menu);
-   glutAddMenuEntry("Lighting off", 0);
-   glutAddMenuEntry("Lighting on", 1);
-   glutAddMenuEntry("Wireframe", 2);
-   glutAddMenuEntry("Solid", 3);
-   glutAddMenuEntry("Flat", 4);
- glutAddMenuEntry("Smooth", 5);
- glutAttachMenu(GLUT_RIGHT_BUTTON);
+  glutIdleFunc(idle);
+ //  /* Create menus */
+ //   glutCreateMenu(menu);
+ //   glutAddMenuEntry("Lighting off", 0);
+ //   glutAddMenuEntry("Lighting on", 1);
+ //   glutAddMenuEntry("Wireframe", 2);
+ //   glutAddMenuEntry("Solid", 3);
+ //   glutAddMenuEntry("Flat", 4);
+ // glutAddMenuEntry("Smooth", 5);
+ // glutAttachMenu(GLUT_RIGHT_BUTTON);
 
   glutMainLoop();
   return 0;
